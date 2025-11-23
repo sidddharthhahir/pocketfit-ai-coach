@@ -1,0 +1,112 @@
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DietPlan } from "./DietPlan";
+import { WorkoutPlan } from "./WorkoutPlan";
+import { CalorieCalculator } from "./CalorieCalculator";
+import { Menu, User } from "lucide-react";
+import { OnboardingData } from "./OnboardingForm";
+
+interface DashboardProps {
+  userData: OnboardingData;
+  aiResponse: any;
+}
+
+export const Dashboard = ({ userData, aiResponse }: DashboardProps) => {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              PocketFit AI
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon">
+              <User className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2">Welcome to your fitness journey!</h2>
+          <p className="text-muted-foreground">
+            Your personalized plan is ready. Let's achieve your goals together.
+          </p>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="diet">Diet</TabsTrigger>
+            <TabsTrigger value="workout">Workout</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <CalorieCalculator userData={userData} />
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="p-6 border-border shadow-card">
+                <h3 className="text-xl font-semibold mb-4">Your Stats</h3>
+                <dl className="space-y-3">
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Weight</dt>
+                    <dd className="font-semibold">{userData.weight} kg</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Height</dt>
+                    <dd className="font-semibold">{userData.height} cm</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Age</dt>
+                    <dd className="font-semibold">{userData.age} years</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Goal</dt>
+                    <dd className="font-semibold capitalize">{userData.goal}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Experience</dt>
+                    <dd className="font-semibold capitalize">{userData.experience}</dd>
+                  </div>
+                </dl>
+              </Card>
+
+              <Card className="p-6 border-border shadow-card">
+                <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    Log Today's Workout
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    Track Meal
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    View Progress
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    Update Goals
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="diet">
+            <DietPlan userData={userData} />
+          </TabsContent>
+
+          <TabsContent value="workout">
+            <WorkoutPlan userData={userData} />
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+};
