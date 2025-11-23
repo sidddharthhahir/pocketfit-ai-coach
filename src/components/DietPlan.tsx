@@ -1,52 +1,70 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { OnboardingData } from "./OnboardingForm";
-import { Utensils } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Utensils, Loader2 } from "lucide-react";
 
 interface DietPlanProps {
   userData: OnboardingData;
+  userId: string;
 }
 
-export const DietPlan = ({ userData }: DietPlanProps) => {
-  const sampleMeals = [
-    {
-      type: "Breakfast",
-      time: "8:00 AM",
-      items: ["Oatmeal with banana", "2 boiled eggs", "Green tea"],
-      calories: 450,
-      protein: 25
-    },
-    {
-      type: "Mid-Morning Snack",
-      time: "11:00 AM",
-      items: ["Greek yogurt", "Handful of almonds"],
-      calories: 200,
-      protein: 15
-    },
-    {
-      type: "Lunch",
-      time: "1:00 PM",
-      items: ["Grilled chicken breast", "Brown rice", "Mixed vegetables", "Salad"],
-      calories: 600,
-      protein: 45
-    },
-    {
-      type: "Evening Snack",
-      time: "4:00 PM",
-      items: ["Protein shake", "Apple"],
-      calories: 250,
-      protein: 30
-    },
-    {
-      type: "Dinner",
-      time: "7:00 PM",
-      items: ["Baked fish", "Sweet potato", "Steamed broccoli"],
-      calories: 500,
-      protein: 40
-    }
-  ];
+export const DietPlan = ({ userData, userId }: DietPlanProps) => {
+  const [meals, setMeals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const totalCalories = sampleMeals.reduce((sum, meal) => sum + meal.calories, 0);
-  const totalProtein = sampleMeals.reduce((sum, meal) => sum + meal.protein, 0);
+  useEffect(() => {
+    loadDietPlan();
+  }, [userId]);
+
+  const loadDietPlan = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fitness_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data && data.plan_data) {
+        const planData = data.plan_data as any;
+        if (planData.diet_plan?.meals) {
+          setMeals(planData.diet_plan.meals);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error loading diet plan:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+  const totalProtein = meals.reduce((sum, meal) => sum + (meal.protein || 0), 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (meals.length === 0) {
+    return (
+      <Card className="p-8 border-border shadow-card text-center">
+        <p className="text-muted-foreground mb-4">No diet plan available yet.</p>
+        <Button variant="hero" onClick={loadDietPlan}>
+          Load Diet Plan
+        </Button>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -75,11 +93,11 @@ export const DietPlan = ({ userData }: DietPlanProps) => {
         </div>
 
         <div className="space-y-4">
-          {sampleMeals.map((meal, index) => (
+          {meals.map((meal, index) => (
             <Card key={index} className="p-4 border-border bg-background/50">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h4 className="font-semibold">{meal.type}</h4>
+                  <h4 className="font-semibold capitalize">{meal.type}</h4>
                   <p className="text-sm text-muted-foreground">{meal.time}</p>
                 </div>
                 <div className="text-right">
@@ -88,7 +106,7 @@ export const DietPlan = ({ userData }: DietPlanProps) => {
                 </div>
               </div>
               <ul className="space-y-1">
-                {meal.items.map((item, idx) => (
+                {meal.items.map((item: string, idx: number) => (
                   <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     {item}

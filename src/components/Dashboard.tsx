@@ -4,15 +4,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DietPlan } from "./DietPlan";
 import { WorkoutPlan } from "./WorkoutPlan";
 import { CalorieCalculator } from "./CalorieCalculator";
-import { Menu, User } from "lucide-react";
+import { ProgressTracker } from "./ProgressTracker";
+import { Menu, User, LogOut } from "lucide-react";
 import { OnboardingData } from "./OnboardingForm";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardProps {
   userData: OnboardingData;
-  aiResponse: any;
+  userId: string;
 }
 
-export const Dashboard = ({ userData, aiResponse }: DashboardProps) => {
+export const Dashboard = ({ userData, userId }: DashboardProps) => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
@@ -42,10 +45,11 @@ export const Dashboard = ({ userData, aiResponse }: DashboardProps) => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="diet">Diet</TabsTrigger>
             <TabsTrigger value="workout">Workout</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -99,11 +103,15 @@ export const Dashboard = ({ userData, aiResponse }: DashboardProps) => {
           </TabsContent>
 
           <TabsContent value="diet">
-            <DietPlan userData={userData} />
+            <DietPlan userData={userData} userId={userId} />
           </TabsContent>
 
           <TabsContent value="workout">
-            <WorkoutPlan userData={userData} />
+            <WorkoutPlan userData={userData} userId={userId} />
+          </TabsContent>
+
+          <TabsContent value="progress">
+            <ProgressTracker userId={userId} />
           </TabsContent>
         </Tabs>
       </main>
