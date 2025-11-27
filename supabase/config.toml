@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.adjust-plan]
 verify_jwt = true
+
+[functions.analyze-exercise-form]
+verify_jwt = true

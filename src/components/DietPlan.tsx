@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OnboardingData } from "./OnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Utensils, Loader2 } from "lucide-react";
+import { Utensils, Loader2, Edit2, Save, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface DietPlanProps {
   userData: OnboardingData;
@@ -13,6 +16,8 @@ interface DietPlanProps {
 export const DietPlan = ({ userData, userId }: DietPlanProps) => {
   const [meals, setMeals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingMeal, setEditingMeal] = useState<any>(null);
+  const [planId, setPlanId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDietPlan();
@@ -32,6 +37,7 @@ export const DietPlan = ({ userData, userId }: DietPlanProps) => {
       if (error) throw error;
       
       if (data && data.plan_data) {
+        setPlanId(data.id);
         const planData = data.plan_data as any;
         if (planData.diet_plan?.meals) {
           setMeals(planData.diet_plan.meals);
@@ -100,9 +106,59 @@ export const DietPlan = ({ userData, userId }: DietPlanProps) => {
                   <h4 className="font-semibold capitalize">{meal.type}</h4>
                   <p className="text-sm text-muted-foreground">{meal.time}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold">{meal.calories} cal</p>
-                  <p className="text-sm text-accent">{meal.protein}g protein</p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold">{meal.calories} cal</p>
+                    <p className="text-sm text-accent">{meal.protein}g protein</p>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => setEditingMeal({...meal, index})}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit {meal.type}</DialogTitle>
+                      </DialogHeader>
+                      {editingMeal && (
+                        <EditMealForm 
+                          meal={editingMeal} 
+                          onSave={async (updated) => {
+                            const newMeals = [...meals];
+                            newMeals[editingMeal.index] = updated;
+                            setMeals(newMeals);
+                            
+                            if (planId) {
+                              const { data: currentPlan } = await supabase
+                                .from('fitness_plans')
+                                .select('plan_data')
+                                .eq('id', planId)
+                                .single();
+                              
+                              if (currentPlan) {
+                                const planData = currentPlan.plan_data as any;
+                                planData.diet_plan.meals = newMeals;
+                                
+                                await supabase
+                                  .from('fitness_plans')
+                                  .update({ plan_data: planData })
+                                  .eq('id', planId);
+                              }
+                            }
+                            
+                            toast.success('Meal updated!');
+                            setEditingMeal(null);
+                          }}
+                          onCancel={() => setEditingMeal(null)}
+                        />
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
               <ul className="space-y-1">
@@ -117,6 +173,61 @@ export const DietPlan = ({ userData, userId }: DietPlanProps) => {
           ))}
         </div>
       </Card>
+    </div>
+  );
+};
+
+const EditMealForm = ({ meal, onSave, onCancel }: any) => {
+  const [edited, setEdited] = useState(meal);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm font-medium mb-2 block">Time</label>
+        <Input
+          value={edited.time}
+          onChange={(e) => setEdited({...edited, time: e.target.value})}
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium mb-2 block">Calories</label>
+          <Input
+            type="number"
+            value={edited.calories}
+            onChange={(e) => setEdited({...edited, calories: parseInt(e.target.value)})}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium mb-2 block">Protein (g)</label>
+          <Input
+            type="number"
+            value={edited.protein}
+            onChange={(e) => setEdited({...edited, protein: parseInt(e.target.value)})}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">Food Items (one per line)</label>
+        <textarea
+          className="w-full min-h-[120px] p-3 border border-border rounded-md bg-background"
+          value={edited.items.join('\n')}
+          onChange={(e) => setEdited({...edited, items: e.target.value.split('\n').filter((i: string) => i.trim())})}
+        />
+      </div>
+
+      <div className="flex gap-2 justify-end">
+        <Button variant="outline" onClick={onCancel}>
+          <X className="w-4 h-4 mr-2" />
+          Cancel
+        </Button>
+        <Button onClick={() => onSave(edited)}>
+          <Save className="w-4 h-4 mr-2" />
+          Save Changes
+        </Button>
+      </div>
     </div>
   );
 };
