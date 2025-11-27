@@ -1,1 +1,13 @@
 project_id = "begnhcixmjedjlzzmvoo"
+
+[functions.generate-fitness-plan]
+verify_jwt = true
+
+[functions.generate-weekly-insights]
+verify_jwt = true
+
+[functions.parse-meal]
+verify_jwt = true
+
+[functions.adjust-plan]
+verify_jwt = true

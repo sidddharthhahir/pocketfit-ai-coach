@@ -71,7 +71,17 @@ serve(async (req) => {
       ? weightLogs.data[0].weight - weightLogs.data[weightLogs.data.length - 1].weight
       : 0;
 
-    const systemPrompt = `You are PocketFit AI. Analyze this week's fitness data and provide insights.
+    const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach.
+Tone: Energetic, supportive, motivating, clear. Provide actionable insights.
+
+INSIGHTS LOGIC:
+Track: weight trends, attendance trends, protein average, consistency
+Provide 3-4 clear, specific suggestions.
+
+AUTO-ADJUST RULES:
+- If weight changes too quickly (bulk: >0.5kg/week, cut: <-0.5kg/week) → suggest calorie adjustment
+- If attendance < 70% → suggest scheduling tips or reduced volume
+- If protein < target → suggest high-protein swaps
 
 Weekly Data:
 - Workout Attendance: ${attendanceRate.toFixed(1)}% (${completedWorkouts}/${totalWorkouts} sessions)
@@ -80,15 +90,14 @@ Weekly Data:
 - Goal: ${profile.data?.goal}
 - Target: ${profile.data?.goal === 'bulk' ? 'Gain weight' : profile.data?.goal === 'cut' ? 'Lose weight' : 'Maintain weight'}
 
-Provide specific, actionable insights and suggestions.
-
 Return ONLY valid JSON:
 {
   "weight_change": ${weightChange},
   "attendance_rate": "${attendanceRate.toFixed(1)}%",
   "protein_average": ${avgProtein.toFixed(1)},
-  "progress_summary": "string",
-  "suggestions": ["string", "string", "string"]
+  "progress_summary": "string (assess if on track)",
+  "top_issues": ["string"],
+  "suggestions": ["string", "string", "string", "string"]
 }`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

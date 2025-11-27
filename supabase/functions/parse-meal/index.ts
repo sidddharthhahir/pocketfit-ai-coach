@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userData } = await req.json();
+    const { mealDescription, mealType } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -34,74 +34,31 @@ serve(async (req) => {
       });
     }
 
-    console.log('Generating fitness plan for user:', user.id);
+    console.log('Parsing meal for user:', user.id);
 
-    const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach + personal trainer + diet coach.
-Your tone: Energetic, supportive, motivating, clear, simple. No medical claims, no extreme dieting.
+    const systemPrompt = `You are PocketFit AI, an expert nutritionist.
+Parse the user's meal description and estimate calories and protein for each food item.
 
-CALORIE LOGIC:
-- Bulk: TDEE + 300
-- Cut: TDEE - 300
-- Maintain: TDEE
-Show calculation steps.
-
-PROTEIN LOGIC:
-1.6–2.2g × bodyweight (default: 1.8g × bodyweight)
-
-WORKOUT LOGIC:
-- Beginner → Full body 3x/week
-- Intermediate → Push/Pull/Legs
-- Advanced → PPL + accessories
-Must include: warm-up, 5-7 exercises with sets/reps/rest, cooldown
-
-DIET LOGIC:
-- Breakfast → high protein
-- Lunch → balanced
-- Dinner → light
-- Snacks → yogurt, tofu, eggs, shakes
-Support: ${userData.dietaryPreference}
-
-User Stats:
-- Weight: ${userData.weight}kg
-- Height: ${userData.height}cm
-- Age: ${userData.age}
-- Gender: ${userData.gender}
-- Goal: ${userData.goal}
-- Experience: ${userData.experience}
-- Diet Preference: ${userData.dietaryPreference}
+MEAL PARSING RULES:
+- Identify each food item
+- Estimate portions from description (e.g., "2 eggs", "1 cup rice")
+- Provide calorie and protein estimates
+- Be realistic with portions
+- Confidence score: 0.0-1.0 (1.0 = very confident)
 
 Return ONLY valid JSON:
 {
-  "calories": {
-    "tdee": number,
-    "target": number,
-    "protein_target": number,
-    "calculation_steps": ["string"]
-  },
-  "diet_plan": {
-    "meals": [
-      {
-        "type": "breakfast|lunch|dinner|snack",
-        "time": "HH:MM",
-        "items": ["string"],
-        "calories": number,
-        "protein": number
-      }
-    ]
-  },
-  "workout_plan": {
-    "split": "push|pull|legs|upper|lower|full_body",
-    "exercises": [
-      {
-        "name": "string",
-        "sets": number,
-        "reps": "string",
-        "rest_seconds": number,
-        "muscle_group": "string",
-        "notes": "warm-up/cooldown if applicable"
-      }
-    ]
-  }
+  "items": [
+    {
+      "name": "string",
+      "estimated_cal": number,
+      "estimated_protein_g": number,
+      "confidence": number
+    }
+  ],
+  "meal_total_cal": number,
+  "meal_total_protein": number,
+  "confidence_overall": number
 }`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -114,9 +71,9 @@ Return ONLY valid JSON:
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate my personalized fitness plan.' }
+          { role: 'user', content: `Parse this ${mealType}: ${mealDescription}` }
         ],
-        temperature: 0.7,
+        temperature: 0.5,
       }),
     });
 
@@ -146,52 +103,51 @@ Return ONLY valid JSON:
     }
 
     const aiData = await response.json();
-    const planText = aiData.choices[0].message.content;
+    const mealText = aiData.choices[0].message.content;
     
-    console.log('Raw AI response:', planText);
+    console.log('Raw AI response:', mealText);
     
-    // Extract JSON from markdown code blocks if present
-    let planData;
+    let mealData;
     try {
-      const jsonMatch = planText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : planText;
-      planData = JSON.parse(jsonStr);
+      const jsonMatch = mealText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : mealText;
+      mealData = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       throw new Error('Invalid AI response format');
     }
 
-    // Save the plan to database
-    const { data: savedPlan, error: saveError } = await supabaseClient
-      .from('fitness_plans')
+    // Save to meal_logs
+    const mealDate = new Date().toISOString().split('T')[0];
+    const { data: savedMeal, error: saveError } = await supabaseClient
+      .from('meal_logs')
       .insert({
         user_id: user.id,
-        plan_type: 'both',
-        plan_data: planData,
-        target_calories: planData.calories.target,
-        target_protein: planData.calories.protein_target,
-        tdee: planData.calories.tdee,
-        is_active: true
+        meal_date: mealDate,
+        meal_type: mealType,
+        items: mealData.items,
+        total_calories: mealData.meal_total_cal,
+        total_protein: mealData.meal_total_protein
       })
       .select()
       .single();
 
     if (saveError) {
-      console.error('Error saving plan:', saveError);
+      console.error('Error saving meal:', saveError);
       throw saveError;
     }
 
-    console.log('Plan saved successfully:', savedPlan.id);
+    console.log('Meal saved successfully:', savedMeal.id);
 
     return new Response(JSON.stringify({ 
-      plan: planData,
-      planId: savedPlan.id 
+      meal: mealData,
+      mealId: savedMeal.id 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in generate-fitness-plan:', error);
+    console.error('Error in parse-meal:', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
