@@ -10,10 +10,10 @@ import { WorkoutLogger } from "./WorkoutLogger";
 import { PlanAdjustment } from "./PlanAdjustment";
 import { ProfileSection } from "./ProfileSection";
 import { ExerciseFormChecker } from "./ExerciseFormChecker";
-import { Menu, User, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { OnboardingData } from "./OnboardingForm";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardProps {
   userData: OnboardingData;
@@ -21,6 +21,17 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ userData, userId }: DashboardProps) => {
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
@@ -30,14 +41,10 @@ export const Dashboard = ({ userData, userId }: DashboardProps) => {
               PocketFit AI
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <User className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </header>
 

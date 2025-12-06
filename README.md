@@ -1,73 +1,78 @@
-# Welcome to your Lovable project
+# PocketFit AI Coach
 
-## Project info
+An AI-powered personal fitness coach that creates personalized workout plans, diet recommendations, and tracks your progress.
 
-**URL**: https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da
+## Features
 
-## How can I edit this code?
+- 🎯 **Personalized Plans**: AI generates custom workout and diet plans based on your goals
+- 📊 **Progress Tracking**: Log weight, track workouts, visualize progress with charts
+- 🍽️ **Meal Logging**: Describe meals in natural language, AI calculates nutrition
+- 💪 **Workout Logger**: Track completed exercises with notes
+- 📈 **Weekly Insights**: AI-powered analysis of your fitness journey
+- 🏋️ **Form Checker**: Upload exercise photos for AI form feedback
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- React + TypeScript + Vite
+- Tailwind CSS + shadcn/ui
+- Supabase (Auth, Database, Edge Functions)
+- React Query, React Router
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and start prompting.
+## Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
+- Node.js 18+
+- npm or bun
 
-**Use your preferred IDE**
+### Environment Variables
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The app uses Lovable Cloud, so environment variables are auto-configured:
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Supabase anon key
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Development
 
-Follow these steps:
+```bash
+# Install dependencies
+npm install
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Visit `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## User Flows
 
-**Use GitHub Codespaces**
+### Getting Started
+1. Click "Start Your Journey" on the landing page
+2. Sign up with email/password
+3. Complete the onboarding form (weight, height, goals, etc.)
+4. AI generates your personalized fitness plan
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Daily Usage
+1. **Diet Tab**: View today's meal plan, edit meals
+2. **Workout Tab**: View exercises, log completion
+3. **Log Tab**: Log meals and track workout progress
+4. **Progress Tab**: Log weight, generate weekly insights
+5. **Profile Tab**: Update your fitness profile
 
-## What technologies are used for this project?
+## Architecture
 
-This project is built with:
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed technical documentation.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## How to Edit
 
-## How can I deploy this project?
+**Use Lovable**
+Visit the [Lovable Project](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and start prompting.
 
-Simply open [Lovable](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and click on Share -> Publish.
+**Use your preferred IDE**
+Clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-## Can I connect a custom domain to my Lovable project?
+## Deploy
 
-Yes, you can!
+Open [Lovable](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and click on Share -> Publish.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT
