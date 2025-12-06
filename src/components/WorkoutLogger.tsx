@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell, CheckCircle2 } from "lucide-react";
+import { Dumbbell, CheckCircle2, Info } from "lucide-react";
+import { ExerciseTutorDialog } from "./ExerciseTutorDialog";
 import { toast } from "sonner";
 
 interface WorkoutLoggerProps {
@@ -136,7 +137,17 @@ export const WorkoutLogger = ({ userId }: WorkoutLoggerProps) => {
                 className="mt-1"
               />
               <div className="flex-1">
-                <p className="font-medium">{exercise.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{exercise.name}</p>
+                  <ExerciseTutorDialog 
+                    exerciseName={exercise.name}
+                    trigger={
+                      <button className="text-primary hover:text-primary/80 transition-colors" title="Form Guide">
+                        <Info className="h-4 w-4" />
+                      </button>
+                    }
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {exercise.sets} sets × {exercise.reps} reps • {exercise.rest_seconds}s rest
                 </p>

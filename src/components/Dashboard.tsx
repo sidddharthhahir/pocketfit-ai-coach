@@ -10,6 +10,7 @@ import { WorkoutLogger } from "./WorkoutLogger";
 import { PlanAdjustment } from "./PlanAdjustment";
 import { ProfileSection } from "./ProfileSection";
 import { ExerciseFormChecker } from "./ExerciseFormChecker";
+import { GymCheckin } from "./GymCheckin";
 import { LogOut } from "lucide-react";
 import { OnboardingData } from "./OnboardingForm";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,12 +58,13 @@ export const Dashboard = ({ userData, userId }: DashboardProps) => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl grid-cols-7 gap-1">
+          <TabsList className="grid w-full max-w-5xl grid-cols-8 gap-1">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="diet">Diet</TabsTrigger>
             <TabsTrigger value="workout">Workout</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="log">Log</TabsTrigger>
+            <TabsTrigger value="checkin">Check-in</TabsTrigger>
             <TabsTrigger value="form">Form</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -134,6 +136,10 @@ export const Dashboard = ({ userData, userId }: DashboardProps) => {
               <MealLogger />
               <WorkoutLogger userId={userId} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="checkin">
+            <GymCheckin userId={userId} />
           </TabsContent>
 
           <TabsContent value="form">

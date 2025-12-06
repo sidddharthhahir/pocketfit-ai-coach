@@ -10,6 +10,8 @@ An AI-powered personal fitness coach that creates personalized workout plans, di
 - 💪 **Workout Logger**: Track completed exercises with notes
 - 📈 **Weekly Insights**: AI-powered analysis of your fitness journey
 - 🏋️ **Form Checker**: Upload exercise photos for AI form feedback
+- 📹 **Exercise Tutor**: Visual guides with form cues and safety tips for each exercise
+- 📸 **Gym Check-in**: Photo attendance tracking with habit streaks and gallery
 
 ## Tech Stack
 
