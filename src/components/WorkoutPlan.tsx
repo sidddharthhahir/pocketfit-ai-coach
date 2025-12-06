@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OnboardingData } from "./OnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell, Loader2 } from "lucide-react";
+import { Dumbbell, Loader2, Info } from "lucide-react";
+import { ExerciseTutorDialog } from "./ExerciseTutorDialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface WorkoutPlanProps {
@@ -136,9 +137,19 @@ export const WorkoutPlan = ({ userData, userId }: WorkoutPlanProps) => {
           {exercises.map((exercise, index) => (
             <Card key={index} className="p-4 border-border bg-background/50 hover:border-primary/50 transition-colors">
               <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-semibold">{exercise.name}</h4>
-                  <p className="text-sm text-muted-foreground">{exercise.muscle_group}</p>
+                <div className="flex items-start gap-2">
+                  <div>
+                    <h4 className="font-semibold">{exercise.name}</h4>
+                    <p className="text-sm text-muted-foreground">{exercise.muscle_group}</p>
+                  </div>
+                  <ExerciseTutorDialog 
+                    exerciseName={exercise.name}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Form Guide">
+                        <Info className="h-4 w-4 text-primary" />
+                      </Button>
+                    }
+                  />
                 </div>
                 <span className="text-xs bg-muted px-2 py-1 rounded">
                   Exercise {index + 1}

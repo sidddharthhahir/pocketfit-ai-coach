@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_checkins: {
+        Row: {
+          ai_comment: string | null
+          ai_is_gym: boolean | null
+          created_at: string
+          date: string
+          id: string
+          photo_url: string
+          user_id: string
+        }
+        Insert: {
+          ai_comment?: string | null
+          ai_is_gym?: boolean | null
+          created_at?: string
+          date: string
+          id?: string
+          photo_url: string
+          user_id: string
+        }
+        Update: {
+          ai_comment?: string | null
+          ai_is_gym?: boolean | null
+          created_at?: string
+          date?: string
+          id?: string
+          photo_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meal_logs: {
         Row: {
           created_at: string | null

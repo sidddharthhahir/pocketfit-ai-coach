@@ -67,6 +67,13 @@ src/
 
 6. **weekly_insights** - AI-generated progress analysis
 
+7. **gym_checkins** - Photo check-in attendance tracking
+   - photo_url, ai_is_gym, ai_comment
+
+## Storage Buckets
+
+- **checkins** - Stores gym check-in photos (public bucket)
+
 ## Edge Functions
 
 1. **generate-fitness-plan** - Creates personalized workout/diet plans using AI
@@ -74,6 +81,13 @@ src/
 3. **parse-meal** - Parses meal descriptions into nutritional data
 4. **adjust-plan** - Modifies plans based on user feedback
 5. **analyze-exercise-form** - Analyzes exercise form from images
+
+## Exercise Media Guides
+
+Located in `src/data/exerciseMediaGuides.ts`:
+- Static mapping of common exercises with form cues and safety tips
+- `getExerciseMediaGuide()` function for fuzzy name matching
+- Can be extended with video URLs or connected to remote CDN
 
 ## Key Flows
 
