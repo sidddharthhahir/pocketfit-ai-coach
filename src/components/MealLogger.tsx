@@ -6,23 +6,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { Utensils, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { mealDescriptionSchema } from "@/lib/validationSchemas";
 
 export const MealLogger = () => {
   const [mealDescription, setMealDescription] = useState("");
-  const [mealType, setMealType] = useState("breakfast");
+  const [mealType, setMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
   const [isLoading, setIsLoading] = useState(false);
   const [lastLog, setLastLog] = useState<any>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleLogMeal = async () => {
-    if (!mealDescription.trim()) {
-      toast.error("Please describe your meal");
+    // Clear previous error
+    setValidationError(null);
+    
+    // Validate input with zod schema
+    const result = mealDescriptionSchema.safeParse({ 
+      mealDescription: mealDescription.trim(), 
+      mealType 
+    });
+    
+    if (!result.success) {
+      const errorMessage = result.error.errors[0]?.message || "Invalid input";
+      setValidationError(errorMessage);
+      toast.error(errorMessage);
       return;
     }
 
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('parse-meal', {
-        body: { mealDescription, mealType }
+        body: { 
+          mealDescription: result.data.mealDescription, 
+          mealType: result.data.mealType 
+        }
       });
 
       if (error) throw error;
@@ -37,6 +53,8 @@ export const MealLogger = () => {
       setIsLoading(false);
     }
   };
+
+  const remainingChars = 500 - mealDescription.length;
 
   return (
     <div className="space-y-6">
@@ -56,7 +74,7 @@ export const MealLogger = () => {
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 block">Meal Type</label>
-            <Select value={mealType} onValueChange={setMealType}>
+            <Select value={mealType} onValueChange={(v) => setMealType(v as typeof mealType)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -74,15 +92,29 @@ export const MealLogger = () => {
             <Textarea
               placeholder="e.g., 2 eggs, 2 slices whole wheat toast, 1 banana, black coffee"
               value={mealDescription}
-              onChange={(e) => setMealDescription(e.target.value)}
+              onChange={(e) => {
+                setMealDescription(e.target.value);
+                setValidationError(null);
+              }}
+              maxLength={500}
               rows={4}
-              className="resize-none"
+              className={`resize-none ${validationError ? 'border-destructive' : ''}`}
             />
+            <div className="flex justify-between mt-1">
+              {validationError ? (
+                <p className="text-sm text-destructive">{validationError}</p>
+              ) : (
+                <span />
+              )}
+              <p className={`text-xs ${remainingChars < 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {remainingChars} characters remaining
+              </p>
+            </div>
           </div>
 
           <Button 
             onClick={handleLogMeal} 
-            disabled={isLoading}
+            disabled={isLoading || mealDescription.trim().length < 3}
             className="w-full"
           >
             {isLoading ? (

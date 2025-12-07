@@ -6,6 +6,69 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validation bounds for user data
+const VALIDATION = {
+  weight: { min: 20, max: 500 },
+  height: { min: 50, max: 300 },
+  age: { min: 13, max: 120 },
+  validGenders: ['male', 'female', 'other'],
+  validGoals: ['bulk', 'cut', 'maintain'],
+  validExperience: ['beginner', 'intermediate', 'advanced'],
+};
+
+// Validate and sanitize user data
+function validateUserData(userData: any): { valid: boolean; error?: string; sanitized?: any } {
+  if (!userData || typeof userData !== 'object') {
+    return { valid: false, error: 'User data is required' };
+  }
+
+  const { weight, height, age, gender, goal, experience, dietaryPreference } = userData;
+
+  // Validate numeric fields
+  if (typeof weight !== 'number' || weight < VALIDATION.weight.min || weight > VALIDATION.weight.max) {
+    return { valid: false, error: `Weight must be between ${VALIDATION.weight.min} and ${VALIDATION.weight.max}kg` };
+  }
+
+  if (typeof height !== 'number' || height < VALIDATION.height.min || height > VALIDATION.height.max) {
+    return { valid: false, error: `Height must be between ${VALIDATION.height.min} and ${VALIDATION.height.max}cm` };
+  }
+
+  if (typeof age !== 'number' || !Number.isInteger(age) || age < VALIDATION.age.min || age > VALIDATION.age.max) {
+    return { valid: false, error: `Age must be between ${VALIDATION.age.min} and ${VALIDATION.age.max}` };
+  }
+
+  // Validate enum fields
+  if (!VALIDATION.validGenders.includes(gender)) {
+    return { valid: false, error: 'Invalid gender value' };
+  }
+
+  if (!VALIDATION.validGoals.includes(goal)) {
+    return { valid: false, error: 'Invalid goal value' };
+  }
+
+  if (!VALIDATION.validExperience.includes(experience)) {
+    return { valid: false, error: 'Invalid experience level' };
+  }
+
+  if (typeof dietaryPreference !== 'string' || dietaryPreference.length === 0 || dietaryPreference.length > 50) {
+    return { valid: false, error: 'Invalid dietary preference' };
+  }
+
+  // Return sanitized data (bounded numbers, validated strings)
+  return {
+    valid: true,
+    sanitized: {
+      weight: Math.round(weight * 10) / 10, // Round to 1 decimal
+      height: Math.round(height),
+      age: Math.floor(age),
+      gender,
+      goal,
+      experience,
+      dietaryPreference: dietaryPreference.slice(0, 50),
+    }
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,6 +76,18 @@ serve(async (req) => {
 
   try {
     const { userData } = await req.json();
+    
+    // Validate user data server-side
+    const validation = validateUserData(userData);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const sanitizedData = validation.sanitized;
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -36,6 +111,7 @@ serve(async (req) => {
 
     console.log('Generating fitness plan for user:', user.id);
 
+    // Use sanitized data in the prompt
     const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach + personal trainer + diet coach.
 Your tone: Energetic, supportive, motivating, clear, simple. No medical claims, no extreme dieting.
 
@@ -59,16 +135,16 @@ DIET LOGIC:
 - Lunch → balanced
 - Dinner → light
 - Snacks → yogurt, tofu, eggs, shakes
-Support: ${userData.dietaryPreference}
+Support: ${sanitizedData.dietaryPreference}
 
 User Stats:
-- Weight: ${userData.weight}kg
-- Height: ${userData.height}cm
-- Age: ${userData.age}
-- Gender: ${userData.gender}
-- Goal: ${userData.goal}
-- Experience: ${userData.experience}
-- Diet Preference: ${userData.dietaryPreference}
+- Weight: ${sanitizedData.weight}kg
+- Height: ${sanitizedData.height}cm
+- Age: ${sanitizedData.age}
+- Gender: ${sanitizedData.gender}
+- Goal: ${sanitizedData.goal}
+- Experience: ${sanitizedData.experience}
+- Diet Preference: ${sanitizedData.dietaryPreference}
 
 Return ONLY valid JSON:
 {

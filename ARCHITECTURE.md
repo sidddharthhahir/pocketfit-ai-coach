@@ -72,7 +72,19 @@ src/
 
 ## Storage Buckets
 
-- **checkins** - Stores gym check-in photos (public bucket)
+- **checkins** - Stores gym check-in photos (private bucket, signed URLs only)
+
+## Security
+
+### Input Validation
+- All validation schemas in `src/lib/validationSchemas.ts`
+- Zod validation with realistic bounds (age: 13-120, weight: 20-500kg, height: 50-300cm)
+- Server-side validation in edge functions mirrors client-side
+- Meal descriptions sanitized before AI prompt interpolation
+
+### Storage Security
+- The `checkins` bucket is **private** - photos served via signed URLs with 1-hour expiration
+- RLS policies ensure users can only access their own photos
 
 ## Edge Functions
 
