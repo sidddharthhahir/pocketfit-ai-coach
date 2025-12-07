@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Upload, CheckCircle2, Loader2, Calendar, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from "date-fns";
 
 interface GymCheckinProps {
   userId: string;
@@ -18,6 +18,7 @@ interface CheckinData {
   ai_is_gym: boolean | null;
   ai_comment: string | null;
   created_at: string;
+  signedUrl?: string;
 }
 
 // Stub function for AI verification - can be replaced with real vision model later
@@ -37,6 +38,37 @@ async function analyzeGymPhoto(photoUrl: string): Promise<{ isGym: boolean; comm
     isGym: true,
     comment: comments[Math.floor(Math.random() * comments.length)]
   };
+}
+
+// Helper function to get signed URL for a photo
+async function getSignedUrl(photoPath: string): Promise<string | null> {
+  try {
+    // Extract the path from full URL if it's a public URL
+    let path = photoPath;
+    if (photoPath.includes('/storage/v1/object/public/checkins/')) {
+      path = photoPath.split('/storage/v1/object/public/checkins/')[1];
+    } else if (photoPath.includes('/storage/v1/object/sign/checkins/')) {
+      // Already a signed URL path, extract the actual file path
+      const urlObj = new URL(photoPath);
+      path = urlObj.pathname.split('/checkins/')[1]?.split('?')[0] || '';
+    }
+    
+    if (!path) return null;
+    
+    const { data, error } = await supabase.storage
+      .from('checkins')
+      .createSignedUrl(path, 3600); // 1 hour expiration
+    
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      return null;
+    }
+    
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Error in getSignedUrl:', error);
+    return null;
+  }
 }
 
 export const GymCheckin = ({ userId }: GymCheckinProps) => {
@@ -63,9 +95,18 @@ export const GymCheckin = ({ userId }: GymCheckinProps) => {
       if (error) throw error;
       
       const checkins = (data || []) as CheckinData[];
-      setAllCheckins(checkins);
       
-      const todayData = checkins.find(c => c.date === today);
+      // Get signed URLs for all photos
+      const checkinsWithSignedUrls = await Promise.all(
+        checkins.map(async (checkin) => {
+          const signedUrl = await getSignedUrl(checkin.photo_url);
+          return { ...checkin, signedUrl: signedUrl || checkin.photo_url };
+        })
+      );
+      
+      setAllCheckins(checkinsWithSignedUrls);
+      
+      const todayData = checkinsWithSignedUrls.find(c => c.date === today);
       setTodayCheckin(todayData || null);
     } catch (error: any) {
       console.error('Error loading checkins:', error);
@@ -103,12 +144,8 @@ export const GymCheckin = ({ userId }: GymCheckinProps) => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('checkins')
-        .getPublicUrl(fileName);
-
-      const photoUrl = urlData.publicUrl;
+      // Store the file path (not public URL) for later signed URL generation
+      const photoPath = fileName;
 
       // Create checkin record
       const { data: checkinData, error: insertError } = await supabase
@@ -116,15 +153,18 @@ export const GymCheckin = ({ userId }: GymCheckinProps) => {
         .insert({
           user_id: userId,
           date: today,
-          photo_url: photoUrl
+          photo_url: photoPath // Store path, not public URL
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
 
+      // Get signed URL for display
+      const signedUrl = await getSignedUrl(photoPath);
+
       // Run AI analysis (stub)
-      const analysis = await analyzeGymPhoto(photoUrl);
+      const analysis = await analyzeGymPhoto(signedUrl || photoPath);
 
       // Update with AI results
       const { error: updateError } = await supabase
@@ -227,7 +267,7 @@ export const GymCheckin = ({ userId }: GymCheckinProps) => {
           <div className="space-y-4">
             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
               <img
-                src={todayCheckin.photo_url}
+                src={todayCheckin.signedUrl || todayCheckin.photo_url}
                 alt="Today's gym check-in"
                 className="w-full h-full object-cover"
               />
@@ -342,7 +382,7 @@ export const GymCheckin = ({ userId }: GymCheckinProps) => {
                 className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
               >
                 <img
-                  src={checkin.photo_url}
+                  src={checkin.signedUrl || checkin.photo_url}
                   alt={`Check-in ${checkin.date}`}
                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                 />
