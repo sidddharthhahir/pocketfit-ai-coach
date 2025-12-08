@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      buddies: {
+        Row: {
+          buddy_user_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          buddy_user_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          buddy_user_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      buddy_invites: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          invitee_id: string | null
+          inviter_id: string
+          status: Database["public"]["Enums"]["invite_status"]
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code: string
+          invitee_id?: string | null
+          inviter_id: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          invitee_id?: string | null
+          inviter_id?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Relationships: []
+      }
+      commitments: {
+        Row: {
+          created_at: string
+          duration_weeks: number
+          end_date: string
+          id: string
+          is_active: boolean
+          start_date: string
+          target_value: number
+          type: Database["public"]["Enums"]["commitment_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_weeks: number
+          end_date: string
+          id?: string
+          is_active?: boolean
+          start_date: string
+          target_value: number
+          type: Database["public"]["Enums"]["commitment_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_weeks?: number
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          target_value?: number
+          type?: Database["public"]["Enums"]["commitment_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       fitness_plans: {
         Row: {
           created_at: string | null
@@ -241,10 +328,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_invite_code: { Args: never; Returns: string }
+      get_buddy_weekly_stats: {
+        Args: { target_user_id: string; week_start: string }
+        Returns: {
+          checkins_count: number
+          current_streak: number
+          workouts_count: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      commitment_type:
+        | "workouts_per_week"
+        | "checkins_per_week"
+        | "meals_logged_per_week"
+      invite_status: "pending" | "accepted" | "declined" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -371,6 +470,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      commitment_type: [
+        "workouts_per_week",
+        "checkins_per_week",
+        "meals_logged_per_week",
+      ],
+      invite_status: ["pending", "accepted", "declined", "expired"],
+    },
   },
 } as const
