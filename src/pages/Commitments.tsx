@@ -229,14 +229,14 @@ export const CommitmentsPage = ({ userId }: CommitmentsPageProps) => {
       const startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
       const endDate = addWeeks(startDate, parseInt(newDuration));
 
-      const { error } = await supabase.from("commitments").insert({
+      const { error } = await supabase.from("commitments").insert([{
         user_id: userId,
-        type: newType,
+        type: newType as "workouts_per_week" | "checkins_per_week" | "meals_logged_per_week",
         target_value: parseInt(newTarget),
         duration_weeks: parseInt(newDuration),
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: format(endDate, "yyyy-MM-dd"),
-      });
+      }]);
 
       if (error) throw error;
 
