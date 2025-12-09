@@ -2,21 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Hero } from "@/components/Hero";
 import { OnboardingForm, OnboardingData } from "@/components/OnboardingForm";
-import { Dashboard } from "@/components/Dashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-type ViewState = "hero" | "onboarding" | "dashboard";
+type ViewState = "hero" | "onboarding" | "generating";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const [view, setView] = useState<ViewState>("hero");
-  const [userData, setUserData] = useState<OnboardingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,17 +26,8 @@ const Index = () => {
           .maybeSingle();
 
         if (profile) {
-          setHasProfile(true);
-          setUserData({
-            weight: Number(profile.weight),
-            height: Number(profile.height),
-            age: profile.age,
-            gender: profile.gender,
-            goal: profile.goal as "bulk" | "cut" | "maintain",
-            experience: profile.experience as "beginner" | "intermediate" | "advanced",
-            dietaryPreference: profile.dietary_preference
-          });
-          setView("dashboard");
+          // User has profile, redirect to dashboard with proper navigation
+          navigate("/dashboard");
         } else {
           setView("onboarding");
         }
@@ -51,7 +39,7 @@ const Index = () => {
     if (!authLoading) {
       checkProfile();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, navigate]);
 
   const handleGetStarted = () => {
     if (user) {
@@ -65,7 +53,7 @@ const Index = () => {
     if (!user) return;
     
     setIsLoading(true);
-    setUserData(data);
+    setView("generating");
 
     try {
       // Save profile
@@ -85,7 +73,7 @@ const Index = () => {
       if (profileError) throw profileError;
 
       // Generate fitness plan using AI
-      const { data: planData, error: planError } = await supabase.functions.invoke(
+      const { error: planError } = await supabase.functions.invoke(
         'generate-fitness-plan',
         {
           body: { userData: data }
@@ -94,16 +82,16 @@ const Index = () => {
 
       if (planError) throw planError;
 
-      setIsLoading(false);
-      setHasProfile(true);
-      setView("dashboard");
-      
       toast({
         title: "Your plan is ready!",
         description: "AI has created a personalized fitness plan just for you.",
       });
+
+      // Redirect to dashboard with proper navigation
+      navigate("/dashboard");
     } catch (error: any) {
       setIsLoading(false);
+      setView("onboarding");
       toast({
         variant: "destructive",
         title: "Error creating plan",
@@ -134,8 +122,11 @@ const Index = () => {
           isLoading={isLoading}
         />
       )}
-      {view === "dashboard" && user && userData && (
-        <Dashboard userData={userData} userId={user.id} />
+      {view === "generating" && (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-lg text-muted-foreground">Creating your personalized plan...</p>
+        </div>
       )}
     </>
   );
