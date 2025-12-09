@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
+import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,6 @@ import ProfilePage from "@/pages/Profile";
 
 export const AppRoutes = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const [userData, setUserData] = useState<OnboardingData | null>(null);
@@ -97,29 +96,38 @@ export const AppRoutes = () => {
   return (
     <MainLayout onSignOut={handleSignOut}>
       <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route
-          path="/"
-          element={
-            location.pathname === "/dashboard" ? (
-              <DashboardPage userData={userData} userId={user!.id} />
-            ) : location.pathname === "/workouts" ? (
-              <WorkoutsPage userData={userData} userId={user!.id} />
-            ) : location.pathname === "/nutrition" ? (
-              <NutritionPage userData={userData} userId={user!.id} />
-            ) : location.pathname === "/progress" ? (
-              <ProgressPage userId={user!.id} />
-            ) : location.pathname === "/photos" ? (
-              <PhotosPage userId={user!.id} />
-            ) : location.pathname === "/accountability" ? (
-              <AccountabilityPage userId={user!.id} />
-            ) : location.pathname === "/commitments" ? (
-              <CommitmentsPage userId={user!.id} />
-            ) : location.pathname === "/profile" ? (
-              <ProfilePage userId={user!.id} />
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
-          }
+          path="/dashboard"
+          element={<DashboardPage userData={userData} userId={user!.id} />}
+        />
+        <Route
+          path="/workouts"
+          element={<WorkoutsPage userData={userData} userId={user!.id} />}
+        />
+        <Route
+          path="/nutrition"
+          element={<NutritionPage userData={userData} userId={user!.id} />}
+        />
+        <Route
+          path="/progress"
+          element={<ProgressPage userId={user!.id} />}
+        />
+        <Route
+          path="/photos"
+          element={<PhotosPage userId={user!.id} />}
+        />
+        <Route
+          path="/accountability"
+          element={<AccountabilityPage userId={user!.id} />}
+        />
+        <Route
+          path="/commitments"
+          element={<CommitmentsPage userId={user!.id} />}
+        />
+        <Route
+          path="/profile"
+          element={<ProfilePage userId={user!.id} />}
         />
       </Routes>
     </MainLayout>
