@@ -31,9 +31,11 @@ export const MainLayout = ({ children, onSignOut }: MainLayoutProps) => {
       {/* Desktop Navigation */}
       <DesktopNav onSignOut={onSignOut} />
 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 pb-24 md:pb-8">
-        {children}
+      {/* Main Content - constrained width for better readability on large screens */}
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+        <div className="mx-auto max-w-6xl w-full">
+          {children}
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation */}
