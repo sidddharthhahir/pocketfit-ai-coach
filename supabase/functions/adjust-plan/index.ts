@@ -13,6 +13,36 @@ serve(async (req) => {
 
   try {
     const { reason, context } = await req.json();
+    
+    // Validate and sanitize reason input
+    if (!reason || typeof reason !== 'string') {
+      return new Response(JSON.stringify({ error: 'Reason is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const sanitizedReason = reason
+      .trim()
+      .slice(0, 500)
+      .replace(/[<>{}[\]\\\/]/g, '')
+      .replace(/\s+/g, ' ');
+
+    if (!sanitizedReason) {
+      return new Response(JSON.stringify({ error: 'Valid reason is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sanitize context object if provided
+    const safeContext: Record<string, string | number | null> = {};
+    if (context && typeof context === 'object') {
+      if (context.goal) safeContext.goal = String(context.goal).slice(0, 100).replace(/[<>{}[\]\\\/]/g, '');
+      if (context.weight) safeContext.weight = Number(context.weight) || null;
+      if (context.attendance) safeContext.attendance = Number(context.attendance) || null;
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -34,7 +64,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Adjusting plan for user:', user.id, 'Reason:', reason);
+    console.log('Adjusting plan for user:', user.id, 'Reason:', sanitizedReason);
 
     // Get current active plan
     const { data: currentPlan, error: planError } = await supabaseClient
@@ -62,13 +92,13 @@ AUTO-ADJUST RULES:
 - If attendance low: suggest scheduling tips, reduce workout frequency temporarily
 
 Current Plan Summary:
-- Goal: ${context?.goal || 'not specified'}
+- Goal: ${safeContext.goal || 'not specified'}
 - Current Calories: ${currentPlan.target_calories}
 - Current Protein: ${currentPlan.target_protein}g
 - Workout Split: ${planData?.workout_plan?.split || 'not specified'}
 
-Adjustment Reason: ${reason}
-Context: ${JSON.stringify(context || {})}
+Adjustment Reason: ${sanitizedReason}
+Context: ${JSON.stringify(safeContext)}
 
 Return ONLY valid JSON:
 {
