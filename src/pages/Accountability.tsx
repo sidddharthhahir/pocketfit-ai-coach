@@ -189,15 +189,15 @@ export const AccountabilityPage = ({ userId }: AccountabilityPageProps) => {
 
     setIsAccepting(true);
     try {
-      // Find the invite
-      const { data: invite, error: findError } = await supabase
-        .from("buddy_invites")
-        .select("*")
-        .eq("invite_code", inviteCode.toUpperCase())
-        .eq("status", "pending")
-        .maybeSingle();
+      // Use secure lookup function to find the invite (bypasses RLS safely)
+      const { data: inviteData, error: findError } = await supabase.rpc(
+        "lookup_buddy_invite",
+        { p_invite_code: inviteCode }
+      );
 
       if (findError) throw findError;
+      
+      const invite = inviteData?.[0];
       if (!invite) {
         toast.error("Invalid or expired invite code");
         return;
