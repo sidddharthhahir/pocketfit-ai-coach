@@ -337,6 +337,14 @@ export type Database = {
           workouts_count: number
         }[]
       }
+      lookup_buddy_invite: {
+        Args: { p_invite_code: string }
+        Returns: {
+          expires_at: string
+          id: string
+          inviter_id: string
+        }[]
+      }
     }
     Enums: {
       commitment_type:
