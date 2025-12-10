@@ -13,6 +13,37 @@ serve(async (req) => {
 
   try {
     const { imageData, exerciseName } = await req.json();
+    
+    // Input validation for exerciseName
+    if (!exerciseName || typeof exerciseName !== 'string') {
+      return new Response(JSON.stringify({ error: 'Exercise name is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Sanitize exerciseName: limit length, remove special characters
+    const sanitizedExerciseName = exerciseName
+      .trim()
+      .slice(0, 100) // Max 100 characters
+      .replace(/[<>{}[\]\\\/]/g, '') // Remove potentially dangerous characters
+      .replace(/\s+/g, ' '); // Normalize whitespace
+    
+    if (sanitizedExerciseName.length < 2) {
+      return new Response(JSON.stringify({ error: 'Exercise name must be at least 2 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Validate imageData
+    if (!imageData || typeof imageData !== 'string') {
+      return new Response(JSON.stringify({ error: 'Image data is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -34,7 +65,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Analyzing exercise form for user:', user.id, 'Exercise:', exerciseName);
+    console.log('Analyzing exercise form for user:', user.id, 'Exercise:', sanitizedExerciseName);
 
     const systemPrompt = `You are PocketFit AI, an expert fitness form coach.
 Analyze the user's exercise form from the image provided.
@@ -46,7 +77,7 @@ FORM ANALYSIS RULES:
 - Provide specific, actionable corrections
 - Be encouraging and supportive
 
-Exercise: ${exerciseName}
+Exercise: ${sanitizedExerciseName}
 
 Return ONLY valid JSON:
 {
