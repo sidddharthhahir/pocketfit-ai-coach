@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DietPlan } from "@/components/DietPlan";
 import { MealLogger } from "@/components/MealLogger";
+import { NutritionChat } from "@/components/NutritionChat";
 import { OnboardingData } from "@/components/OnboardingForm";
-import { Utensils, ClipboardList } from "lucide-react";
+import { Utensils, ClipboardList, MessageSquare } from "lucide-react";
 
 interface NutritionPageProps {
   userData: OnboardingData;
@@ -19,8 +20,12 @@ export const NutritionPage = ({ userData, userId }: NutritionPageProps) => {
         </p>
       </div>
 
-      <Tabs defaultValue="plan" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs defaultValue="chat" className="space-y-6">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsTrigger value="chat" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            <span>AI Coach</span>
+          </TabsTrigger>
           <TabsTrigger value="plan" className="flex items-center gap-2">
             <Utensils className="w-4 h-4" />
             <span>Diet Plan</span>
@@ -30,6 +35,10 @@ export const NutritionPage = ({ userData, userId }: NutritionPageProps) => {
             <span>Log Meals</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="chat">
+          <NutritionChat userData={userData} />
+        </TabsContent>
 
         <TabsContent value="plan">
           <DietPlan userData={userData} userId={userId} />
