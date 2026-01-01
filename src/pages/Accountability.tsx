@@ -114,6 +114,7 @@ export const AccountabilityPage = ({ userId }: AccountabilityPageProps) => {
         .select("*")
         .eq("inviter_id", userId)
         .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString()) // Only get non-expired invites
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
