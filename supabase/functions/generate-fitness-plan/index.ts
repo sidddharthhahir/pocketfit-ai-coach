@@ -124,11 +124,37 @@ Show calculation steps.
 PROTEIN LOGIC:
 1.6–2.2g × bodyweight (default: 1.8g × bodyweight)
 
-WORKOUT LOGIC:
-- Beginner → Full body 3x/week
-- Intermediate → Push/Pull/Legs
-- Advanced → PPL + accessories
-Must include: warm-up, 5-7 exercises with sets/reps/rest, cooldown
+WORKOUT SCHEDULE LOGIC (WEEKLY):
+Create a FULL 7-DAY weekly workout schedule. Each day should have DIFFERENT exercises based on experience level:
+
+For Beginner:
+- Day 0 (Sunday): Rest
+- Day 1 (Monday): Full Body A
+- Day 2 (Tuesday): Rest or Light Cardio
+- Day 3 (Wednesday): Full Body B
+- Day 4 (Thursday): Rest or Light Cardio
+- Day 5 (Friday): Full Body C
+- Day 6 (Saturday): Active Recovery
+
+For Intermediate:
+- Day 0 (Sunday): Rest
+- Day 1 (Monday): Push (Chest, Shoulders, Triceps)
+- Day 2 (Tuesday): Pull (Back, Biceps)
+- Day 3 (Wednesday): Legs
+- Day 4 (Thursday): Push (variation)
+- Day 5 (Friday): Pull (variation)
+- Day 6 (Saturday): Legs (variation) or Active Recovery
+
+For Advanced:
+- Day 0 (Sunday): Rest
+- Day 1 (Monday): Push (Heavy)
+- Day 2 (Tuesday): Pull (Heavy)
+- Day 3 (Wednesday): Legs (Heavy)
+- Day 4 (Thursday): Push (Volume)
+- Day 5 (Friday): Pull (Volume)
+- Day 6 (Saturday): Legs (Volume) or Arms + Abs
+
+Each workout must include: 5-7 exercises with sets/reps/rest
 
 DIET LOGIC:
 - Breakfast → high protein
@@ -165,18 +191,32 @@ Return ONLY valid JSON:
       }
     ]
   },
-  "workout_plan": {
-    "split": "push|pull|legs|upper|lower|full_body",
-    "exercises": [
-      {
-        "name": "string",
-        "sets": number,
-        "reps": "string",
-        "rest_seconds": number,
-        "muscle_group": "string",
-        "notes": "warm-up/cooldown if applicable"
-      }
-    ]
+  "weekly_workouts": {
+    "0": {
+      "day_name": "Sunday",
+      "type": "rest|workout|active_recovery",
+      "focus": "string (e.g., 'Rest Day', 'Push', 'Full Body A')",
+      "exercises": []
+    },
+    "1": {
+      "day_name": "Monday",
+      "type": "workout",
+      "focus": "string",
+      "exercises": [
+        {
+          "name": "string",
+          "sets": number,
+          "reps": "string",
+          "rest_seconds": number,
+          "muscle_group": "string"
+        }
+      ]
+    },
+    "2": { ... },
+    "3": { ... },
+    "4": { ... },
+    "5": { ... },
+    "6": { ... }
   }
 }`;
 
@@ -190,7 +230,7 @@ Return ONLY valid JSON:
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate my personalized fitness plan.' }
+          { role: 'user', content: 'Generate my personalized weekly fitness plan with different workouts for each day.' }
         ],
         temperature: 0.7,
       }),
@@ -237,12 +277,19 @@ Return ONLY valid JSON:
       throw new Error('Invalid AI response format');
     }
 
+    // Deactivate old plans first
+    await supabaseClient
+      .from('fitness_plans')
+      .update({ is_active: false })
+      .eq('user_id', user.id)
+      .eq('is_active', true);
+
     // Save the plan to database
     const { data: savedPlan, error: saveError } = await supabaseClient
       .from('fitness_plans')
       .insert({
         user_id: user.id,
-        plan_type: 'both',
+        plan_type: 'weekly',
         plan_data: planData,
         target_calories: planData.calories.target,
         target_protein: planData.calories.protein_target,

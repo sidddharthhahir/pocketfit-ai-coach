@@ -1,25 +1,88 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Utensils, Loader2 } from "lucide-react";
+import { Utensils, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { mealDescriptionSchema } from "@/lib/validationSchemas";
+import { Progress } from "@/components/ui/progress";
+
+interface MealLog {
+  id: string;
+  meal_type: string;
+  total_calories: number;
+  total_protein: number;
+  items: Array<{
+    name: string;
+    estimated_cal: number;
+    estimated_protein_g: number;
+  }>;
+  created_at: string;
+}
 
 export const MealLogger = () => {
   const [mealDescription, setMealDescription] = useState("");
   const [mealType, setMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
   const [isLoading, setIsLoading] = useState(false);
-  const [lastLog, setLastLog] = useState<any>(null);
+  const [todayMeals, setTodayMeals] = useState<MealLog[]>([]);
+  const [isLoadingMeals, setIsLoadingMeals] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [calorieGoal, setCalorieGoal] = useState(2000);
+  const [proteinGoal, setProteinGoal] = useState(150);
+
+  useEffect(() => {
+    loadTodayMeals();
+    loadNutritionGoals();
+  }, []);
+
+  const loadNutritionGoals = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('fitness_plans')
+        .select('target_calories, target_protein')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (data) {
+        setCalorieGoal(data.target_calories || 2000);
+        setProteinGoal(data.target_protein || 150);
+      }
+    } catch (error) {
+      console.error('Error loading nutrition goals:', error);
+    }
+  };
+
+  const loadTodayMeals = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('meal_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('meal_date', today)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setTodayMeals((data || []) as unknown as MealLog[]);
+    } catch (error) {
+      console.error('Error loading meals:', error);
+    } finally {
+      setIsLoadingMeals(false);
+    }
+  };
 
   const handleLogMeal = async () => {
-    // Clear previous error
     setValidationError(null);
     
-    // Validate input with zod schema
     const result = mealDescriptionSchema.safeParse({ 
       mealDescription: mealDescription.trim(), 
       mealType 
@@ -43,9 +106,9 @@ export const MealLogger = () => {
 
       if (error) throw error;
 
-      setLastLog(data.meal);
       setMealDescription("");
       toast.success("Meal logged successfully!");
+      loadTodayMeals(); // Refresh the list
     } catch (error: any) {
       console.error('Error logging meal:', error);
       toast.error(error.message || 'Failed to log meal');
@@ -54,17 +117,68 @@ export const MealLogger = () => {
     }
   };
 
+  const handleDeleteMeal = async (mealId: string) => {
+    try {
+      const { error } = await supabase
+        .from('meal_logs')
+        .delete()
+        .eq('id', mealId);
+
+      if (error) throw error;
+      toast.success("Meal deleted");
+      loadTodayMeals();
+    } catch (error: any) {
+      toast.error('Failed to delete meal');
+    }
+  };
+
+  const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.total_calories, 0);
+  const totalProtein = todayMeals.reduce((sum, meal) => sum + meal.total_protein, 0);
+  const calorieProgress = Math.min((totalCalories / calorieGoal) * 100, 100);
+  const proteinProgress = Math.min((totalProtein / proteinGoal) * 100, 100);
   const remainingChars = 500 - mealDescription.length;
+
+  const getMealTypeIcon = (type: string) => {
+    switch (type) {
+      case 'breakfast': return '🌅';
+      case 'lunch': return '☀️';
+      case 'dinner': return '🌙';
+      case 'snack': return '🍎';
+      default: return '🍽️';
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Daily Progress Summary */}
+      <Card className="p-6 border-border shadow-card">
+        <h3 className="text-lg font-semibold mb-4">Today's Nutrition</h3>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-muted-foreground">Calories</span>
+              <span className="font-medium">{totalCalories} / {calorieGoal} kcal</span>
+            </div>
+            <Progress value={calorieProgress} className="h-2" />
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-muted-foreground">Protein</span>
+              <span className="font-medium">{totalProtein} / {proteinGoal}g</span>
+            </div>
+            <Progress value={proteinProgress} className="h-2" />
+          </div>
+        </div>
+      </Card>
+
+      {/* Log New Meal */}
       <Card className="p-6 border-border shadow-card">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-            <Utensils className="w-5 h-5 text-accent" />
+            <Plus className="w-5 h-5 text-accent" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold">Log Your Meal</h3>
+            <h3 className="text-xl font-semibold">Log a Meal</h3>
             <p className="text-sm text-muted-foreground">
               Describe what you ate, AI will calculate nutrition
             </p>
@@ -79,10 +193,10 @@ export const MealLogger = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="breakfast">Breakfast</SelectItem>
-                <SelectItem value="lunch">Lunch</SelectItem>
-                <SelectItem value="dinner">Dinner</SelectItem>
-                <SelectItem value="snack">Snack</SelectItem>
+                <SelectItem value="breakfast">🌅 Breakfast</SelectItem>
+                <SelectItem value="lunch">☀️ Lunch</SelectItem>
+                <SelectItem value="dinner">🌙 Dinner</SelectItem>
+                <SelectItem value="snack">🍎 Snack</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -97,7 +211,7 @@ export const MealLogger = () => {
                 setValidationError(null);
               }}
               maxLength={500}
-              rows={4}
+              rows={3}
               className={`resize-none ${validationError ? 'border-destructive' : ''}`}
             />
             <div className="flex justify-between mt-1">
@@ -129,38 +243,73 @@ export const MealLogger = () => {
         </div>
       </Card>
 
-      {lastLog && (
-        <Card className="p-6 border-border shadow-card bg-accent/5">
-          <h4 className="font-semibold mb-4">Last Logged Meal</h4>
-          
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="p-3 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Calories</p>
-              <p className="text-2xl font-bold text-primary">{lastLog.meal_total_cal}</p>
-            </div>
-            <div className="p-3 bg-background rounded-lg">
-              <p className="text-sm text-muted-foreground">Total Protein</p>
-              <p className="text-2xl font-bold text-secondary">{lastLog.meal_total_protein}g</p>
-            </div>
+      {/* Today's Meals */}
+      <Card className="p-6 border-border shadow-card">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Utensils className="w-5 h-5 text-primary" />
           </div>
+          <div>
+            <h3 className="text-xl font-semibold">Today's Meals</h3>
+            <p className="text-sm text-muted-foreground">
+              {todayMeals.length} meal{todayMeals.length !== 1 ? 's' : ''} logged
+            </p>
+          </div>
+        </div>
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Items:</p>
-            {lastLog.items.map((item: any, idx: number) => (
-              <div key={idx} className="flex justify-between text-sm p-2 bg-background rounded">
-                <span>{item.name}</span>
-                <span className="text-muted-foreground">
-                  {item.estimated_cal} cal | {item.estimated_protein_g}g protein
-                </span>
-              </div>
+        {isLoadingMeals ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : todayMeals.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No meals logged today yet.</p>
+            <p className="text-sm mt-1">Start by logging your first meal above!</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {todayMeals.map((meal) => (
+              <Card key={meal.id} className="p-4 bg-muted/30 border-border">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{getMealTypeIcon(meal.meal_type)}</span>
+                    <div>
+                      <span className="font-medium capitalize">{meal.meal_type}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(meal.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-primary">{meal.total_calories} kcal</p>
+                      <p className="text-xs text-muted-foreground">{meal.total_protein}g protein</p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteMeal(meal.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(meal.items as any[]).map((item, idx) => (
+                    <span 
+                      key={idx} 
+                      className="text-xs bg-background px-2 py-1 rounded-full"
+                    >
+                      {item.name}
+                    </span>
+                  ))}
+                </div>
+              </Card>
             ))}
           </div>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            Confidence: {(lastLog.confidence_overall * 100).toFixed(0)}%
-          </p>
-        </Card>
-      )}
+        )}
+      </Card>
     </div>
   );
 };
