@@ -15,7 +15,7 @@ const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 // Sanitize input to reduce prompt injection risk
 function sanitizeInput(text: string): string {
   if (typeof text !== 'string') return '';
-  
+
   return text
     .trim()
     .slice(0, MAX_DESCRIPTION_LENGTH)
@@ -25,6 +25,44 @@ function sanitizeInput(text: string): string {
     .replace(/user\s*:/gi, '')
     .replace(/<[^>]*>/g, '')
     .trim();
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value.replace(/[^0-9.+-]/g, '')) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
+function clamp(min: number, v: number, max: number) {
+  return Math.max(min, Math.min(max, v));
+}
+
+type ParsedItem = {
+  name: string;
+  estimated_cal: number;
+  estimated_protein_g: number;
+  confidence?: number;
+};
+
+function sanitizeItems(items: unknown): ParsedItem[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((it) => {
+      const obj = (it ?? {}) as Record<string, unknown>;
+      const name = typeof obj.name === 'string' ? obj.name.trim() : '';
+      const cal = toFiniteNumber(obj.estimated_cal) ?? 0;
+      const protein = toFiniteNumber(obj.estimated_protein_g) ?? 0;
+      const confidence = toFiniteNumber(obj.confidence);
+
+      if (!name) return null;
+
+      return {
+        name: name.slice(0, 80),
+        estimated_cal: Math.max(0, Math.round(cal)),
+        estimated_protein_g: Math.max(0, Math.round(protein * 10) / 10),
+        confidence: confidence == null ? undefined : clamp(0, confidence, 1),
+      } as ParsedItem;
+    })
+    .filter(Boolean) as ParsedItem[];
 }
 
 serve(async (req) => {
@@ -238,14 +276,24 @@ Parse the food items above and estimate their nutritional content. Return ONLY t
       });
     }
 
-    // Validate the parsed data structure
-    if (!mealData.items || !Array.isArray(mealData.items)) {
-      console.error('Invalid meal data structure:', mealData);
-      return new Response(JSON.stringify({ error: 'Invalid nutrition data format' }), {
-        status: 500,
+    // Validate + normalize the parsed data (AI can return strings/floats)
+    const items = sanitizeItems(mealData.items);
+    if (items.length === 0) {
+      console.error('AI returned no parsable items:', mealData);
+      return new Response(JSON.stringify({ error: 'Could not detect any food items. Please add more detail and try again.' }), {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    const itemsCalories = items.reduce((sum, it) => sum + (Number.isFinite(it.estimated_cal) ? it.estimated_cal : 0), 0);
+    const itemsProtein = items.reduce((sum, it) => sum + (Number.isFinite(it.estimated_protein_g) ? it.estimated_protein_g : 0), 0);
+
+    const totalCaloriesRaw = toFiniteNumber(mealData.meal_total_cal) ?? itemsCalories;
+    const totalProteinRaw = toFiniteNumber(mealData.meal_total_protein) ?? itemsProtein;
+
+    const totalCalories = Math.max(0, Math.round(totalCaloriesRaw));
+    const totalProtein = Math.max(0, Math.round(totalProteinRaw));
 
     // Save to meal_logs
     const mealDate = new Date().toISOString().split('T')[0];
@@ -255,17 +303,19 @@ Parse the food items above and estimate their nutritional content. Return ONLY t
         user_id: user.id,
         meal_date: mealDate,
         meal_type: mealType,
-        items: mealData.items,
-        total_calories: mealData.meal_total_cal || 0,
-        total_protein: mealData.meal_total_protein || 0
+        items,
+        total_calories: totalCalories,
+        total_protein: totalProtein,
       })
       .select()
       .single();
 
     if (saveError) {
       console.error('Error saving meal:', saveError);
-      return new Response(JSON.stringify({ 
-        error: 'Failed to save meal log' 
+      return new Response(JSON.stringify({
+        error: saveError.message || 'Failed to save meal log',
+        code: (saveError as any).code,
+        details: (saveError as any).details,
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -274,9 +324,14 @@ Parse the food items above and estimate their nutritional content. Return ONLY t
 
     console.log('Meal saved successfully:', savedMeal.id);
 
-    return new Response(JSON.stringify({ 
-      meal: mealData,
-      mealId: savedMeal.id 
+    return new Response(JSON.stringify({
+      meal: {
+        ...mealData,
+        items,
+        meal_total_cal: totalCalories,
+        meal_total_protein: totalProtein,
+      },
+      mealId: savedMeal.id,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
