@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.nutrition-ai]
 verify_jwt = true
+
+[functions.analyze-meal-photo]
+verify_jwt = true

@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Utensils, Loader2, Plus, Trash2 } from "lucide-react";
+import { Utensils, Loader2, Plus, Trash2, Camera, X, Image } from "lucide-react";
 import { toast } from "sonner";
 import { mealDescriptionSchema } from "@/lib/validationSchemas";
 import { Progress } from "@/components/ui/progress";
@@ -22,7 +22,10 @@ interface MealLog {
   created_at: string;
 }
 
+type LogMode = 'text' | 'photo';
+
 export const MealLogger = () => {
+  const [mode, setMode] = useState<LogMode>('text');
   const [mealDescription, setMealDescription] = useState("");
   const [mealType, setMealType] = useState<"breakfast" | "lunch" | "dinner" | "snack">("breakfast");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +34,9 @@ export const MealLogger = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [calorieGoal, setCalorieGoal] = useState(2000);
   const [proteinGoal, setProteinGoal] = useState(150);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadTodayMeals();
@@ -80,14 +86,44 @@ export const MealLogger = () => {
     }
   };
 
-  const handleLogMeal = async () => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
+      return;
+    }
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleLogMealText = async () => {
     setValidationError(null);
-    
-    const result = mealDescriptionSchema.safeParse({ 
-      mealDescription: mealDescription.trim(), 
-      mealType 
+
+    const result = mealDescriptionSchema.safeParse({
+      mealDescription: mealDescription.trim(),
+      mealType
     });
-    
+
     if (!result.success) {
       const errorMessage = result.error.errors[0]?.message || "Invalid input";
       setValidationError(errorMessage);
@@ -98,9 +134,9 @@ export const MealLogger = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('parse-meal', {
-        body: { 
-          mealDescription: result.data.mealDescription, 
-          mealType: result.data.mealType 
+        body: {
+          mealDescription: result.data.mealDescription,
+          mealType: result.data.mealType
         }
       });
 
@@ -108,10 +144,59 @@ export const MealLogger = () => {
 
       setMealDescription("");
       toast.success("Meal logged successfully!");
-      loadTodayMeals(); // Refresh the list
+      loadTodayMeals();
     } catch (error: any) {
       console.error('Error logging meal:', error);
       toast.error(error.message || 'Failed to log meal');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogMealPhoto = async () => {
+    if (!selectedImage || !imagePreview) {
+      toast.error('Please select a photo first');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload image to storage
+      const fileName = `${user.id}/${Date.now()}-${selectedImage.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('meal-photos')
+        .upload(fileName, selectedImage);
+
+      if (uploadError) throw uploadError;
+
+      // Get signed URL for the AI to access
+      const { data: signedUrlData } = await supabase.storage
+        .from('meal-photos')
+        .createSignedUrl(fileName, 300); // 5 min expiry
+
+      if (!signedUrlData?.signedUrl) {
+        throw new Error('Failed to get image URL');
+      }
+
+      // Call AI to analyze the photo
+      const { data, error } = await supabase.functions.invoke('analyze-meal-photo', {
+        body: {
+          imageUrl: signedUrlData.signedUrl,
+          mealType
+        }
+      });
+
+      if (error) throw error;
+
+      clearImage();
+      toast.success(`Detected: ${data.meal?.description || 'Food items logged!'}`);
+      loadTodayMeals();
+    } catch (error: any) {
+      console.error('Error logging photo meal:', error);
+      toast.error(error.message || 'Failed to analyze photo');
     } finally {
       setIsLoading(false);
     }
@@ -173,15 +258,39 @@ export const MealLogger = () => {
 
       {/* Log New Meal */}
       <Card className="p-6 border-border shadow-card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-            <Plus className="w-5 h-5 text-accent" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+              <Plus className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold">Log a Meal</h3>
+              <p className="text-sm text-muted-foreground">
+                {mode === 'text' ? 'Describe your meal' : 'Take or upload a photo'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-semibold">Log a Meal</h3>
-            <p className="text-sm text-muted-foreground">
-              Describe what you ate, AI will calculate nutrition
-            </p>
+          
+          {/* Mode Toggle */}
+          <div className="flex gap-1 bg-muted rounded-lg p-1">
+            <Button
+              variant={mode === 'text' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setMode('text')}
+              className="gap-1"
+            >
+              <Utensils className="w-4 h-4" />
+              <span className="hidden sm:inline">Text</span>
+            </Button>
+            <Button
+              variant={mode === 'photo' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setMode('photo')}
+              className="gap-1"
+            >
+              <Camera className="w-4 h-4" />
+              <span className="hidden sm:inline">Photo</span>
+            </Button>
           </div>
         </div>
 
@@ -201,45 +310,115 @@ export const MealLogger = () => {
             </Select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium mb-2 block">What did you eat?</label>
-            <Textarea
-              placeholder="e.g., 2 eggs, 2 slices whole wheat toast, 1 banana, black coffee"
-              value={mealDescription}
-              onChange={(e) => {
-                setMealDescription(e.target.value);
-                setValidationError(null);
-              }}
-              maxLength={500}
-              rows={3}
-              className={`resize-none ${validationError ? 'border-destructive' : ''}`}
-            />
-            <div className="flex justify-between mt-1">
-              {validationError ? (
-                <p className="text-sm text-destructive">{validationError}</p>
-              ) : (
-                <span />
-              )}
-              <p className={`text-xs ${remainingChars < 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                {remainingChars} characters remaining
-              </p>
-            </div>
-          </div>
+          {mode === 'text' ? (
+            <>
+              <div>
+                <label className="text-sm font-medium mb-2 block">What did you eat?</label>
+                <Textarea
+                  placeholder="e.g., 2 eggs, 2 slices whole wheat toast, 1 banana, black coffee"
+                  value={mealDescription}
+                  onChange={(e) => {
+                    setMealDescription(e.target.value);
+                    setValidationError(null);
+                  }}
+                  maxLength={500}
+                  rows={3}
+                  className={`resize-none ${validationError ? 'border-destructive' : ''}`}
+                />
+                <div className="flex justify-between mt-1">
+                  {validationError ? (
+                    <p className="text-sm text-destructive">{validationError}</p>
+                  ) : (
+                    <span />
+                  )}
+                  <p className={`text-xs ${remainingChars < 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {remainingChars} characters remaining
+                  </p>
+                </div>
+              </div>
 
-          <Button 
-            onClick={handleLogMeal} 
-            disabled={isLoading || mealDescription.trim().length < 3}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              'Log Meal'
-            )}
-          </Button>
+              <Button
+                onClick={handleLogMealText}
+                disabled={isLoading || mealDescription.trim().length < 3}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  'Log Meal'
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Meal Photo</label>
+                
+                {imagePreview ? (
+                  <div className="relative rounded-lg overflow-hidden border border-border">
+                    <img
+                      src={imagePreview}
+                      alt="Meal preview"
+                      className="w-full h-48 object-cover"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={clearImage}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
+                      <Image className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Click to upload a photo
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG up to 10MB
+                    </p>
+                  </div>
+                )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+              </div>
+
+              <Button
+                onClick={handleLogMealPhoto}
+                disabled={isLoading || !selectedImage}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing photo...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 mr-2" />
+                    Analyze & Log
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </div>
       </Card>
 
@@ -285,9 +464,9 @@ export const MealLogger = () => {
                       <p className="text-sm font-semibold text-primary">{meal.total_calories} kcal</p>
                       <p className="text-xs text-muted-foreground">{meal.total_protein}g protein</p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => handleDeleteMeal(meal.id)}
                     >
@@ -297,8 +476,8 @@ export const MealLogger = () => {
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {(meal.items as any[]).map((item, idx) => (
-                    <span 
-                      key={idx} 
+                    <span
+                      key={idx}
                       className="text-xs bg-background px-2 py-1 rounded-full"
                     >
                       {item.name}
