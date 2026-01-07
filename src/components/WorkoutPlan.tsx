@@ -31,6 +31,90 @@ interface WeeklyWorkouts {
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+type Exercise = DayWorkout["exercises"][number];
+
+type LegacyWorkoutPlan = {
+  split?: string;
+  exercises?: Exercise[];
+};
+
+function splitIntoGroups(exercises: Exercise[], groupCount: number): Exercise[][] {
+  const groups: Exercise[][] = Array.from({ length: groupCount }, () => []);
+  exercises.forEach((ex, idx) => groups[idx % groupCount].push(ex));
+  const nonEmpty = groups.filter((g) => g.length > 0);
+  return nonEmpty.length === groupCount ? groups : Array.from({ length: groupCount }, () => exercises);
+}
+
+function filterByKeywords(exercises: Exercise[], keywords: string[]): Exercise[] {
+  const keys = keywords.map((k) => k.toLowerCase());
+  return exercises.filter((e) => {
+    const mg = (e.muscle_group || "").toLowerCase();
+    return keys.some((k) => mg.includes(k));
+  });
+}
+
+function buildLegacyWeeklyWorkouts(
+  legacy: LegacyWorkoutPlan,
+  experience: OnboardingData["experience"]
+): WeeklyWorkouts {
+  const exercises = Array.isArray(legacy.exercises) ? legacy.exercises : [];
+  const byRotation = splitIntoGroups(exercises, 3);
+
+  // Attempt a muscle-group split if the data supports it; otherwise fall back to rotation.
+  const push = filterByKeywords(exercises, ["chest", "should", "tricep"]).slice(0, 7);
+  const pull = filterByKeywords(exercises, ["back", "bicep", "lat"]).slice(0, 7);
+  const legs = filterByKeywords(exercises, ["quad", "ham", "glute", "calf", "leg"]).slice(0, 7);
+  const usePPL = push.length >= 3 && pull.length >= 3 && legs.length >= 3;
+
+  const makeRest = (dayIndex: number, type: DayWorkout["type"], focus: string): DayWorkout => ({
+    day_name: DAY_NAMES[dayIndex],
+    type,
+    focus,
+    exercises: [],
+  });
+
+  const makeWorkout = (dayIndex: number, focus: string, dayExercises: Exercise[]): DayWorkout => ({
+    day_name: DAY_NAMES[dayIndex],
+    type: "workout",
+    focus,
+    exercises: dayExercises,
+  });
+
+  const weekly: WeeklyWorkouts = {};
+
+  if (experience === "beginner") {
+    weekly["0"] = makeRest(0, "rest", "Rest Day");
+    weekly["1"] = makeWorkout(1, "Full Body A", byRotation[0].slice(0, 7));
+    weekly["2"] = makeRest(2, "active_recovery", "Light Cardio + Mobility");
+    weekly["3"] = makeWorkout(3, "Full Body B", byRotation[1].slice(0, 7));
+    weekly["4"] = makeRest(4, "active_recovery", "Light Cardio + Mobility");
+    weekly["5"] = makeWorkout(5, "Full Body C", byRotation[2].slice(0, 7));
+    weekly["6"] = makeRest(6, "active_recovery", "Active Recovery");
+    return weekly;
+  }
+
+  // intermediate / advanced
+  weekly["0"] = makeRest(0, "rest", "Rest Day");
+
+  if (usePPL) {
+    weekly["1"] = makeWorkout(1, "Push", push);
+    weekly["2"] = makeWorkout(2, "Pull", pull);
+    weekly["3"] = makeWorkout(3, "Legs", legs);
+    weekly["4"] = makeWorkout(4, "Push (Variation)", push.slice().reverse());
+    weekly["5"] = makeWorkout(5, "Pull (Variation)", pull.slice().reverse());
+    weekly["6"] = makeWorkout(6, "Legs (Variation)", legs.slice().reverse());
+  } else {
+    weekly["1"] = makeWorkout(1, "Workout A", byRotation[0].slice(0, 7));
+    weekly["2"] = makeWorkout(2, "Workout B", byRotation[1].slice(0, 7));
+    weekly["3"] = makeWorkout(3, "Workout C", byRotation[2].slice(0, 7));
+    weekly["4"] = makeWorkout(4, "Workout A (Variation)", byRotation[0].slice().reverse().slice(0, 7));
+    weekly["5"] = makeWorkout(5, "Workout B (Variation)", byRotation[1].slice().reverse().slice(0, 7));
+    weekly["6"] = makeRest(6, "active_recovery", "Active Recovery");
+  }
+
+  return weekly;
+}
+
 export const WorkoutPlan = ({ userData, userId }: WorkoutPlanProps) => {
   const [weeklyWorkouts, setWeeklyWorkouts] = useState<WeeklyWorkouts | null>(null);
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
@@ -60,18 +144,8 @@ export const WorkoutPlan = ({ userData, userId }: WorkoutPlanProps) => {
         if (planData.weekly_workouts) {
           setWeeklyWorkouts(planData.weekly_workouts);
         } else if (planData.workout_plan) {
-          // Convert old format to new format - same workout every day
-          const legacyWorkout: DayWorkout = {
-            day_name: planData.workout_plan.split || "Workout",
-            type: "workout",
-            focus: planData.workout_plan.split || "Full Body",
-            exercises: planData.workout_plan.exercises || []
-          };
-          const converted: WeeklyWorkouts = {};
-          for (let i = 0; i < 7; i++) {
-            converted[i.toString()] = i === 0 ? { ...legacyWorkout, type: "rest", focus: "Rest Day", exercises: [] } : legacyWorkout;
-          }
-          setWeeklyWorkouts(converted);
+          // Legacy plans stored a single workout; split it into a weekly schedule for display.
+          setWeeklyWorkouts(buildLegacyWeeklyWorkouts(planData.workout_plan, userData.experience));
         }
       }
     } catch (error: any) {
