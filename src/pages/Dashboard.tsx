@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingData } from "@/components/OnboardingForm";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useWaterSleepStats } from "@/hooks/useWaterSleepStats";
 import { useNavigate } from "react-router-dom";
 import { 
   Dumbbell, Utensils, TrendingUp, Camera, ChevronRight,
-  Target, Scale, Activity
+  Target, Scale, Activity, Droplets, Moon
 } from "lucide-react";
 import {
   MotivationalBanner,
@@ -15,6 +16,9 @@ import {
   WeeklyActivityChart,
   AchievementsCard,
 } from "@/components/dashboard";
+import { WaterSleepCharts } from "@/components/dashboard/WaterSleepCharts";
+import { WaterTracker } from "@/components/WaterTracker";
+import { SleepTracker } from "@/components/SleepTracker";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -24,8 +28,9 @@ interface DashboardPageProps {
 export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
   const navigate = useNavigate();
   const stats = useDashboardStats(userId);
+  const waterSleepStats = useWaterSleepStats(userId, userData.weight);
 
-  if (stats.isLoading) {
+  if (stats.isLoading || waterSleepStats.isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-24 w-full" />
@@ -73,20 +78,19 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
       color: "secondary" as const,
     },
     {
+      label: "Today's Water",
+      value: waterSleepStats.todayWater,
+      unit: `/ ${waterSleepStats.waterGoal}ml`,
+      icon: "water" as const,
+      color: "blue" as const,
+    },
+    {
       label: "Weekly Workouts",
       value: stats.weeklyWorkoutCount,
       unit: "sessions",
       changeLabel: "This week",
       icon: "target" as const,
       color: "accent" as const,
-    },
-    {
-      label: "Avg Daily Cals",
-      value: stats.avgDailyCalories,
-      unit: "kcal",
-      changeLabel: "7-day average",
-      icon: "flame" as const,
-      color: "blue" as const,
     },
   ];
 
@@ -120,6 +124,26 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           totalDaysActive={stats.totalDaysActive}
         />
       </div>
+
+      {/* Water & Sleep Trackers */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <WaterTracker
+          userId={userId}
+          todayTotal={waterSleepStats.todayWater}
+          dailyGoal={waterSleepStats.waterGoal}
+          onLog={waterSleepStats.refresh}
+        />
+        <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
+      </div>
+
+      {/* Water & Sleep Charts */}
+      <WaterSleepCharts
+        weeklyWater={waterSleepStats.weeklyWater}
+        weeklySleep={waterSleepStats.weeklySleep}
+        waterGoal={waterSleepStats.waterGoal}
+        sleepGoal={waterSleepStats.sleepGoal}
+        aiInsights={waterSleepStats.aiInsights}
+      />
 
       {/* Achievements */}
       <AchievementsCard
