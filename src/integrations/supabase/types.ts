@@ -242,6 +242,69 @@ export type Database = {
         }
         Relationships: []
       }
+      sleep_logs: {
+        Row: {
+          bed_time: string | null
+          created_at: string
+          id: string
+          log_date: string
+          notes: string | null
+          sleep_hours: number
+          sleep_quality: string | null
+          user_id: string
+          wake_time: string | null
+        }
+        Insert: {
+          bed_time?: string | null
+          created_at?: string
+          id?: string
+          log_date: string
+          notes?: string | null
+          sleep_hours: number
+          sleep_quality?: string | null
+          user_id: string
+          wake_time?: string | null
+        }
+        Update: {
+          bed_time?: string | null
+          created_at?: string
+          id?: string
+          log_date?: string
+          notes?: string | null
+          sleep_hours?: number
+          sleep_quality?: string | null
+          user_id?: string
+          wake_time?: string | null
+        }
+        Relationships: []
+      }
+      water_logs: {
+        Row: {
+          amount_ml: number
+          created_at: string
+          id: string
+          log_date: string
+          logged_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_ml: number
+          created_at?: string
+          id?: string
+          log_date: string
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_ml?: number
+          created_at?: string
+          id?: string
+          log_date?: string
+          logged_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_insights: {
         Row: {
           created_at: string | null
