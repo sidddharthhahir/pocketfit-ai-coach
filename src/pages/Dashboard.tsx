@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingData } from "@/components/OnboardingForm";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useWaterSleepStats } from "@/hooks/useWaterSleepStats";
+import { useSleepTrends } from "@/hooks/useSleepTrends";
 import { useNavigate } from "react-router-dom";
 import { 
   Dumbbell, Utensils, TrendingUp, Camera, ChevronRight,
@@ -17,8 +18,10 @@ import {
   AchievementsCard,
 } from "@/components/dashboard";
 import { WaterSleepCharts } from "@/components/dashboard/WaterSleepCharts";
+import { SleepTrendsCard } from "@/components/dashboard/SleepTrendsCard";
 import { WaterTracker } from "@/components/WaterTracker";
 import { SleepTracker } from "@/components/SleepTracker";
+import { VisionBoard } from "@/components/VisionBoard";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -29,8 +32,9 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
   const navigate = useNavigate();
   const stats = useDashboardStats(userId);
   const waterSleepStats = useWaterSleepStats(userId, userData.weight);
+  const sleepTrends = useSleepTrends(userId);
 
-  if (stats.isLoading || waterSleepStats.isLoading) {
+  if (stats.isLoading || waterSleepStats.isLoading || sleepTrends.isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-24 w-full" />
@@ -144,6 +148,24 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
         sleepGoal={waterSleepStats.sleepGoal}
         aiInsights={waterSleepStats.aiInsights}
       />
+
+      {/* Sleep Trends & Workout Correlation */}
+      <SleepTrendsCard
+        weeklyData={sleepTrends.weeklyData}
+        monthlyData={sleepTrends.monthlyData}
+        avgWeeklySleep={sleepTrends.avgWeeklySleep}
+        avgMonthlySleep={sleepTrends.avgMonthlySleep}
+        avgWeeklyQuality={sleepTrends.avgWeeklyQuality}
+        avgMonthlyQuality={sleepTrends.avgMonthlyQuality}
+        bestSleepDay={sleepTrends.bestSleepDay}
+        worstSleepDay={sleepTrends.worstSleepDay}
+        sleepWorkoutCorrelation={sleepTrends.sleepWorkoutCorrelation}
+        trendDirection={sleepTrends.trendDirection}
+        insights={sleepTrends.insights}
+      />
+
+      {/* Vision Board */}
+      <VisionBoard userId={userId} />
 
       {/* Achievements */}
       <AchievementsCard

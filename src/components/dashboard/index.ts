@@ -4,3 +4,4 @@ export { AchievementsCard } from "./AchievementsCard";
 export { QuickStatsGrid } from "./QuickStatsGrid";
 export { MotivationalBanner } from "./MotivationalBanner";
 export { WaterSleepCharts } from "./WaterSleepCharts";
+export { SleepTrendsCard } from "./SleepTrendsCard";
