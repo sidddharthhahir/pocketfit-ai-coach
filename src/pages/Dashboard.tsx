@@ -22,6 +22,7 @@ import { SleepTrendsCard } from "@/components/dashboard/SleepTrendsCard";
 import { WaterTracker } from "@/components/WaterTracker";
 import { SleepTracker } from "@/components/SleepTracker";
 import { VisionBoard } from "@/components/VisionBoard";
+import { DreamJournal } from "@/components/DreamJournal";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -130,7 +131,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
       </div>
 
       {/* Water & Sleep Trackers */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
         <WaterTracker
           userId={userId}
           todayTotal={waterSleepStats.todayWater}
@@ -138,6 +139,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           onLog={waterSleepStats.refresh}
         />
         <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
+        <DreamJournal userId={userId} />
       </div>
 
       {/* Water & Sleep Charts */}

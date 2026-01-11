@@ -101,6 +101,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dream_logs: {
+        Row: {
+          ai_interpretation: string | null
+          created_at: string
+          dream_content: string
+          dream_title: string | null
+          id: string
+          log_date: string
+          lucidity_level: number | null
+          mood: string | null
+          themes: string[] | null
+          user_id: string
+        }
+        Insert: {
+          ai_interpretation?: string | null
+          created_at?: string
+          dream_content: string
+          dream_title?: string | null
+          id?: string
+          log_date: string
+          lucidity_level?: number | null
+          mood?: string | null
+          themes?: string[] | null
+          user_id: string
+        }
+        Update: {
+          ai_interpretation?: string | null
+          created_at?: string
+          dream_content?: string
+          dream_title?: string | null
+          id?: string
+          log_date?: string
+          lucidity_level?: number | null
+          mood?: string | null
+          themes?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fitness_plans: {
         Row: {
           created_at: string | null
