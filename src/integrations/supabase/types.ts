@@ -356,6 +356,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tomorrow_tasks: {
+        Row: {
+          created_at: string
+          id: string
+          mood_context: string | null
+          sleep_quality_context: string | null
+          status: string
+          task_date: string
+          task_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mood_context?: string | null
+          sleep_quality_context?: string | null
+          status?: string
+          task_date: string
+          task_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mood_context?: string | null
+          sleep_quality_context?: string | null
+          status?: string
+          task_date?: string
+          task_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vision_board_items: {
         Row: {
           achieved_at: string | null
