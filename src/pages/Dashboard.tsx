@@ -24,6 +24,7 @@ import { SleepTracker } from "@/components/SleepTracker";
 import { VisionBoard } from "@/components/VisionBoard";
 import { DreamJournal } from "@/components/DreamJournal";
 import { FutureMessage } from "@/components/FutureMessage";
+import { TomorrowList } from "@/components/TomorrowList";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -132,7 +133,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
       </div>
 
       {/* Water & Sleep Trackers */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <WaterTracker
           userId={userId}
           todayTotal={waterSleepStats.todayWater}
@@ -141,7 +142,12 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
         />
         <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
         <DreamJournal userId={userId} />
+      </div>
+
+      {/* Sleep Flow - Night Features */}
+      <div className="grid md:grid-cols-2 gap-6">
         <FutureMessage userId={userId} />
+        <TomorrowList userId={userId} />
       </div>
 
       {/* Water & Sleep Charts */}
