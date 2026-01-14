@@ -176,6 +176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      future_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_unlocked: boolean
+          mood_at_write: string | null
+          reflection_response: string | null
+          sleep_quality_at_write: string | null
+          tone: string | null
+          unlock_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          mood_at_write?: string | null
+          reflection_response?: string | null
+          sleep_quality_at_write?: string | null
+          tone?: string | null
+          unlock_at: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          mood_at_write?: string | null
+          reflection_response?: string | null
+          sleep_quality_at_write?: string | null
+          tone?: string | null
+          unlock_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gym_checkins: {
         Row: {
           ai_comment: string | null
