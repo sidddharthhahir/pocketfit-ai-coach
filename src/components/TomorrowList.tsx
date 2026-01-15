@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   ListTodo, Plus, Check, Pause, X, Moon, Sparkles, 
-  Loader2, CloudMoon, Sunrise
+  Loader2, CloudMoon, Sunrise, Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format, addDays, isToday, startOfDay, subDays } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 
 interface TomorrowListProps {
   userId: string;
@@ -32,9 +32,9 @@ interface WeeklyInsight {
 }
 
 export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) => {
-  const [tasks, setTasks] = useState<string[]>(["", "", ""]);
+  const [tasks, setTasks] = useState<string[]>([""]);
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
-  const [hasPendingForTomorrow, setHasPendingForTomorrow] = useState(false);
+  const [tomorrowTasks, setTomorrowTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null);
@@ -62,16 +62,17 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
       if (todayError) throw todayError;
       setTodayTasks((todayData as Task[]) || []);
 
-      // Check if there are pending tasks for tomorrow already
+      // Fetch tomorrow's pending tasks
       const { data: tomorrowData, error: tomorrowError } = await supabase
         .from("tomorrow_tasks")
-        .select("id")
+        .select("*")
         .eq("user_id", userId)
         .eq("task_date", tomorrow)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .order("created_at", { ascending: true });
 
       if (tomorrowError) throw tomorrowError;
-      setHasPendingForTomorrow((tomorrowData?.length || 0) > 0);
+      setTomorrowTasks((tomorrowData as Task[]) || []);
 
       // Check if we should show closure message (end of day with completed tasks)
       const hour = new Date().getHours();
@@ -97,13 +98,11 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
 
       if (error || !data || data.length < 5) return;
 
-      // Generate gentle insight based on patterns
       const completed = data.filter(t => t.status === "done").length;
       const skipped = data.filter(t => t.status === "skipped").length;
       const moved = data.filter(t => t.status === "moved").length;
       const total = data.length;
 
-      // Tasks with low sleep quality context
       const lowSleepTasks = data.filter(t => 
         t.sleep_quality_context && ["poor", "fair"].includes(t.sleep_quality_context)
       );
@@ -165,8 +164,8 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
         description: "Rest easy — your mind is clear now.",
       });
 
-      setTasks(["", "", ""]);
-      setHasPendingForTomorrow(true);
+      setTasks([""]);
+      fetchTasks();
     } catch (error) {
       console.error("Error saving tasks:", error);
       toast({
@@ -195,7 +194,6 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
       if (newStatus === "done") {
         toast({ title: "Done ✨", description: "Nice work." });
       } else if (newStatus === "moved") {
-        // Create a copy for tomorrow
         const task = todayTasks.find(t => t.id === taskId);
         if (task) {
           await supabase.from("tomorrow_tasks").insert({
@@ -204,6 +202,7 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
             task_date: tomorrow,
             status: "pending",
           });
+          fetchTasks();
         }
         toast({ title: "Moved to tomorrow", description: "No rush." });
       }
@@ -214,8 +213,34 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
 
   const updateTaskText = (index: number, value: string) => {
     const newTasks = [...tasks];
-    newTasks[index] = value.slice(0, 100); // Max 100 chars
+    newTasks[index] = value.slice(0, 100);
     setTasks(newTasks);
+  };
+
+  const addTaskInput = () => {
+    setTasks([...tasks, ""]);
+  };
+
+  const removeTaskInput = (index: number) => {
+    if (tasks.length <= 1) return;
+    const newTasks = tasks.filter((_, i) => i !== index);
+    setTasks(newTasks);
+  };
+
+  const handleDeleteTomorrowTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from("tomorrow_tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+      
+      setTomorrowTasks(prev => prev.filter(t => t.id !== taskId));
+      toast({ title: "Task removed" });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   if (isLoading) {
@@ -329,7 +354,6 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
           ))}
         </div>
 
-        {/* Weekly Insight */}
         {weeklyInsight && (
           <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/10">
             <div className="flex items-start gap-2">
@@ -342,27 +366,52 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
     );
   }
 
-  // Night flow - Add tomorrow tasks
-  if (!hasPendingForTomorrow) {
-    return (
-      <Card className="p-4 border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-            <ListTodo className="w-5 h-5 text-indigo-500" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Tomorrow List</h3>
-            <p className="text-sm text-muted-foreground">
-              Put it here so your mind doesn't need to hold it tonight.
-            </p>
-          </div>
+  // Night flow - Add/view tomorrow tasks
+  return (
+    <Card className="p-4 border-border">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+          <ListTodo className="w-5 h-5 text-indigo-500" />
         </div>
+        <div>
+          <h3 className="font-semibold">Tomorrow List</h3>
+          <p className="text-sm text-muted-foreground">
+            Put it here so your mind doesn't need to hold it tonight.
+          </p>
+        </div>
+      </div>
 
-        <div className="space-y-2">
-          {tasks.map((task, index) => (
-            <div key={index} className="relative">
+      {/* Existing tomorrow tasks */}
+      {tomorrowTasks.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">Already saved for tomorrow</p>
+          {tomorrowTasks.map((task) => (
+            <div 
+              key={task.id}
+              className="flex items-center gap-2 p-2 rounded-lg bg-indigo-500/5 border border-indigo-500/10"
+            >
+              <Moon className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+              <span className="text-sm flex-1 text-muted-foreground">{task.task_text}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => handleDeleteTomorrowTask(task.id)}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add new tasks */}
+      <div className="space-y-2">
+        {tasks.map((task, index) => (
+          <div key={index} className="flex gap-2">
+            <div className="relative flex-1">
               <Input
-                placeholder={`Task ${index + 1} (optional)`}
+                placeholder={`Task ${tomorrowTasks.length + index + 1}`}
                 value={task}
                 onChange={(e) => updateTaskText(index, e.target.value)}
                 className="pr-12"
@@ -372,62 +421,49 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
                 {task.length}/100
               </span>
             </div>
-          ))}
-        </div>
-
-        <Button
-          className="w-full mt-4"
-          onClick={handleSaveTasks}
-          disabled={isSaving || tasks.every(t => !t.trim())}
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Moon className="w-4 h-4 mr-2" />
-              Save for Tomorrow
-            </>
-          )}
-        </Button>
-
-        {/* Weekly Insight */}
-        {weeklyInsight && (
-          <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/10">
-            <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-muted-foreground">{weeklyInsight.message}</p>
-            </div>
+            {tasks.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => removeTaskInput(index)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
           </div>
+        ))}
+      </div>
+
+      {/* Add more button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full mt-2 text-muted-foreground hover:text-foreground"
+        onClick={addTaskInput}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add another task
+      </Button>
+
+      <Button
+        className="w-full mt-4"
+        onClick={handleSaveTasks}
+        disabled={isSaving || tasks.every(t => !t.trim())}
+      >
+        {isSaving ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Moon className="w-4 h-4 mr-2" />
+            Save for Tomorrow
+          </>
         )}
-      </Card>
-    );
-  }
+      </Button>
 
-  // Tasks already saved for tomorrow
-  return (
-    <Card className="p-4 border-border">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-          <Moon className="w-5 h-5 text-indigo-500" />
-        </div>
-        <div>
-          <h3 className="font-semibold">Tomorrow List</h3>
-          <p className="text-sm text-muted-foreground">Your list is ready for tomorrow</p>
-        </div>
-      </div>
-
-      <div className="p-4 rounded-lg bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 text-center">
-        <CloudMoon className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">
-          Your mind can rest now. <br />
-          Tomorrow's tasks are saved safely.
-        </p>
-      </div>
-
-      {/* Weekly Insight */}
       {weeklyInsight && (
         <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/10">
           <div className="flex items-start gap-2">
