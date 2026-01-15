@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ListTodo, Plus, Check, Pause, X, Moon, Sparkles, 
-  Loader2, CloudMoon, Sunrise, Trash2
+  Loader2, CloudMoon, Sunrise, Trash2, ChevronDown, ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +39,7 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null);
-  const [showClosureMessage, setShowClosureMessage] = useState(false);
+  const [showAddSection, setShowAddSection] = useState(true);
   const { toast } = useToast();
 
   const today = format(new Date(), "yyyy-MM-dd");
@@ -73,12 +74,6 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
 
       if (tomorrowError) throw tomorrowError;
       setTomorrowTasks((tomorrowData as Task[]) || []);
-
-      // Check if we should show closure message (end of day with completed tasks)
-      const hour = new Date().getHours();
-      if (hour >= 20 && todayData && todayData.length > 0) {
-        setShowClosureMessage(true);
-      }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     } finally {
@@ -253,122 +248,33 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
     );
   }
 
-  // Night closure message
-  if (showClosureMessage && todayTasks.length > 0) {
-    const allResolved = todayTasks.every(t => t.status !== "pending");
-    if (allResolved) {
-      return (
-        <Card className="p-6 border-border bg-gradient-to-br from-indigo-500/5 to-purple-500/5">
-          <div className="text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center mx-auto">
-              <CloudMoon className="w-6 h-6 text-indigo-400" />
-            </div>
-            <p className="text-lg font-medium text-foreground">
-              You showed up enough today.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Tomorrow can be adjusted.
-            </p>
-          </div>
-        </Card>
-      );
-    }
-  }
+  const hasPendingTodayTasks = todayTasks.some(t => t.status === "pending");
+  const allTodayResolved = todayTasks.length > 0 && todayTasks.every(t => t.status !== "pending");
+  const hour = new Date().getHours();
+  const isNightTime = hour >= 20;
 
-  // Today's tasks review (morning/day view)
-  if (todayTasks.length > 0 && todayTasks.some(t => t.status === "pending")) {
+  // Night closure message - only show if it's night AND all resolved
+  if (isNightTime && allTodayResolved && tomorrowTasks.length > 0) {
     return (
-      <Card className="p-4 border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-            <Sunrise className="w-5 h-5 text-amber-500" />
+      <Card className="p-6 border-border bg-gradient-to-br from-indigo-500/5 to-purple-500/5">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center mx-auto">
+            <CloudMoon className="w-6 h-6 text-indigo-400" />
           </div>
-          <div>
-            <h3 className="font-semibold">Yesterday's List</h3>
-            <p className="text-sm text-muted-foreground">A gentle check-in</p>
-          </div>
+          <p className="text-lg font-medium text-foreground">
+            You showed up enough today.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Tomorrow can be adjusted.
+          </p>
         </div>
-
-        <div className="space-y-3">
-          {todayTasks.map((task) => (
-            <div 
-              key={task.id} 
-              className={`p-3 rounded-lg border transition-all ${
-                task.status === "pending" 
-                  ? "border-border bg-card" 
-                  : task.status === "done"
-                  ? "border-emerald-500/20 bg-emerald-500/5"
-                  : task.status === "moved"
-                  ? "border-amber-500/20 bg-amber-500/5"
-                  : "border-muted bg-muted/30"
-              }`}
-            >
-              <p className={`text-sm mb-2 ${
-                task.status !== "pending" ? "text-muted-foreground" : "text-foreground"
-              }`}>
-                {task.task_text}
-              </p>
-              
-              {task.status === "pending" ? (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
-                    onClick={() => handleUpdateStatus(task.id, "done")}
-                  >
-                    <Check className="w-3 h-3 mr-1" /> Done
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500/50"
-                    onClick={() => handleUpdateStatus(task.id, "moved")}
-                  >
-                    <Pause className="w-3 h-3 mr-1" /> Later
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs border-muted-foreground/30 hover:bg-muted/50"
-                    onClick={() => handleUpdateStatus(task.id, "skipped")}
-                  >
-                    <X className="w-3 h-3 mr-1" /> Skip
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {task.status === "done" && <Check className="w-3 h-3 text-emerald-500" />}
-                  {task.status === "moved" && <Pause className="w-3 h-3 text-amber-500" />}
-                  {task.status === "skipped" && <X className="w-3 h-3" />}
-                  <span className="capitalize">{task.status}</span>
-                </div>
-              )}
-
-              {task.status === "skipped" && (
-                <p className="text-xs text-muted-foreground mt-2 italic">
-                  That's okay. Some days are heavier than others.
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {weeklyInsight && (
-          <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/10">
-            <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-muted-foreground">{weeklyInsight.message}</p>
-            </div>
-          </div>
-        )}
       </Card>
     );
   }
 
-  // Night flow - Add/view tomorrow tasks
   return (
     <Card className="p-4 border-border">
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
           <ListTodo className="w-5 h-5 text-indigo-500" />
@@ -381,10 +287,92 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
         </div>
       </div>
 
+      {/* Today's pending tasks to review */}
+      {hasPendingTodayTasks && (
+        <Collapsible defaultOpen className="mb-4">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between p-2 h-auto mb-2">
+              <div className="flex items-center gap-2">
+                <Sunrise className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium">Today's check-in</span>
+                <span className="text-xs text-muted-foreground">
+                  ({todayTasks.filter(t => t.status === "pending").length} pending)
+                </span>
+              </div>
+              <ChevronDown className="w-4 h-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2">
+            {todayTasks.map((task) => (
+              <div 
+                key={task.id} 
+                className={`p-3 rounded-lg border transition-all ${
+                  task.status === "pending" 
+                    ? "border-border bg-card" 
+                    : task.status === "done"
+                    ? "border-emerald-500/20 bg-emerald-500/5"
+                    : task.status === "moved"
+                    ? "border-amber-500/20 bg-amber-500/5"
+                    : "border-muted bg-muted/30"
+                }`}
+              >
+                <p className={`text-sm mb-2 ${
+                  task.status !== "pending" ? "text-muted-foreground" : "text-foreground"
+                }`}>
+                  {task.task_text}
+                </p>
+                
+                {task.status === "pending" ? (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs border-emerald-500/30 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                      onClick={() => handleUpdateStatus(task.id, "done")}
+                    >
+                      <Check className="w-3 h-3 mr-1" /> Done
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-500/50"
+                      onClick={() => handleUpdateStatus(task.id, "moved")}
+                    >
+                      <Pause className="w-3 h-3 mr-1" /> Later
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-8 text-xs border-muted-foreground/30 hover:bg-muted/50"
+                      onClick={() => handleUpdateStatus(task.id, "skipped")}
+                    >
+                      <X className="w-3 h-3 mr-1" /> Skip
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {task.status === "done" && <Check className="w-3 h-3 text-emerald-500" />}
+                    {task.status === "moved" && <Pause className="w-3 h-3 text-amber-500" />}
+                    {task.status === "skipped" && <X className="w-3 h-3" />}
+                    <span className="capitalize">{task.status}</span>
+                  </div>
+                )}
+
+                {task.status === "skipped" && (
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    That's okay. Some days are heavier than others.
+                  </p>
+                )}
+              </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
       {/* Existing tomorrow tasks */}
       {tomorrowTasks.length > 0 && (
         <div className="mb-4 space-y-2">
-          <p className="text-xs text-muted-foreground font-medium">Already saved for tomorrow</p>
+          <p className="text-xs text-muted-foreground font-medium">Saved for tomorrow</p>
           {tomorrowTasks.map((task) => (
             <div 
               key={task.id}
@@ -405,64 +393,76 @@ export const TomorrowList = ({ userId, sleepQuality, mood }: TomorrowListProps) 
         </div>
       )}
 
-      {/* Add new tasks */}
-      <div className="space-y-2">
-        {tasks.map((task, index) => (
-          <div key={index} className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                placeholder={`Task ${tomorrowTasks.length + index + 1}`}
-                value={task}
-                onChange={(e) => updateTaskText(index, e.target.value)}
-                className="pr-12"
-                maxLength={100}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                {task.length}/100
-              </span>
+      {/* Add new tasks section */}
+      <Collapsible open={showAddSection} onOpenChange={setShowAddSection}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between p-2 h-auto mb-2">
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4 text-indigo-500" />
+              <span className="text-sm font-medium">Add tasks for tomorrow</span>
             </div>
-            {tasks.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => removeTaskInput(index)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
+            {showAddSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-2">
+            {tasks.map((task, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder={`Task ${tomorrowTasks.length + index + 1}`}
+                    value={task}
+                    onChange={(e) => updateTaskText(index, e.target.value)}
+                    className="pr-12"
+                    maxLength={100}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    {task.length}/100
+                  </span>
+                </div>
+                {tasks.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 w-10 p-0 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => removeTaskInput(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Add more button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full mt-2 text-muted-foreground hover:text-foreground"
-        onClick={addTaskInput}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add another task
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2 text-muted-foreground hover:text-foreground"
+            onClick={addTaskInput}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add another task
+          </Button>
 
-      <Button
-        className="w-full mt-4"
-        onClick={handleSaveTasks}
-        disabled={isSaving || tasks.every(t => !t.trim())}
-      >
-        {isSaving ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          <>
-            <Moon className="w-4 h-4 mr-2" />
-            Save for Tomorrow
-          </>
-        )}
-      </Button>
+          <Button
+            className="w-full mt-3"
+            onClick={handleSaveTasks}
+            disabled={isSaving || tasks.every(t => !t.trim())}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4 mr-2" />
+                Save for Tomorrow
+              </>
+            )}
+          </Button>
+        </CollapsibleContent>
+      </Collapsible>
 
       {weeklyInsight && (
         <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border border-purple-500/10">
