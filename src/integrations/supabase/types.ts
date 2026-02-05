@@ -104,7 +104,9 @@ export type Database = {
       countdowns: {
         Row: {
           created_at: string
+          icon: string | null
           id: string
+          is_recurring: boolean
           status: string
           target_time: string
           title: string
@@ -113,7 +115,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          icon?: string | null
           id?: string
+          is_recurring?: boolean
           status?: string
           target_time: string
           title: string
@@ -122,7 +126,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          icon?: string | null
           id?: string
+          is_recurring?: boolean
           status?: string
           target_time?: string
           title?: string
