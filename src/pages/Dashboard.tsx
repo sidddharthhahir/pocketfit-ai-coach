@@ -25,6 +25,7 @@ import { VisionBoard } from "@/components/VisionBoard";
 import { DreamJournal } from "@/components/DreamJournal";
 import { FutureMessage } from "@/components/FutureMessage";
 import { TomorrowList } from "@/components/TomorrowList";
+import WorkoutCountdown from "@/components/WorkoutCountdown";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -103,6 +104,9 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Workout Countdown - Prominent Position */}
+      <WorkoutCountdown />
+
       {/* Motivational Banner */}
       <MotivationalBanner
         todayWorkoutDone={stats.todayWorkoutDone}

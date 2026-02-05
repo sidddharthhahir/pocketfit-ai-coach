@@ -101,6 +101,36 @@ export type Database = {
         }
         Relationships: []
       }
+      countdowns: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          target_time: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          target_time: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          target_time?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dream_logs: {
         Row: {
           ai_interpretation: string | null
