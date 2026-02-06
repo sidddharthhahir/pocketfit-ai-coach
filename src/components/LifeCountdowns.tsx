@@ -20,7 +20,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Timer, Plus, Pencil, Trash2, PartyPopper, Clock } from "lucide-react";
+import { Timer, Plus, Pencil, Trash2, PartyPopper, Clock, Star } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInSeconds, addYears, setYear } from "date-fns";
 
@@ -32,6 +33,7 @@ interface Countdown {
   target_time: string;
   status: string;
   is_recurring: boolean;
+  is_pinned: boolean;
   icon: string;
   created_at: string;
 }
@@ -154,7 +156,46 @@ const LifeCountdowns = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["all-countdowns"] });
       queryClient.invalidateQueries({ queryKey: ["active-countdown"] });
+      queryClient.invalidateQueries({ queryKey: ["focus-countdown"] });
       toast({ title: "Countdown deleted" });
+    },
+  });
+
+  // Pin countdown (unpin all others first)
+  const pinCountdown = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user?.id) throw new Error("Not authenticated");
+      // Unpin all
+      await supabase
+        .from("countdowns")
+        .update({ is_pinned: false })
+        .eq("user_id", user.id);
+      // Pin selected
+      const { error } = await supabase
+        .from("countdowns")
+        .update({ is_pinned: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-countdowns"] });
+      queryClient.invalidateQueries({ queryKey: ["focus-countdown"] });
+      toast({ title: "Countdown pinned ⭐" });
+    },
+  });
+
+  const unpinCountdown = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("countdowns")
+        .update({ is_pinned: false })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-countdowns"] });
+      queryClient.invalidateQueries({ queryKey: ["focus-countdown"] });
+      toast({ title: "Countdown unpinned" });
     },
   });
 
@@ -413,7 +454,16 @@ const LifeCountdowns = () => {
             {countdowns.map((countdown) => {
               const time = timeRemaining[countdown.id];
               const isPast = time && time.total <= 0;
-              const isUrgent = time && time.total > 0 && time.total < 86400000; // Under 24 hours
+              const isUrgent = time && time.total > 0 && time.total < 86400000;
+
+              // Progress bar calculation
+              const createdAt = new Date(countdown.created_at).getTime();
+              const targetAt = new Date(countdown.target_time).getTime();
+              const totalDuration = targetAt - createdAt;
+              const elapsed = Date.now() - createdAt;
+              const progressPercent = totalDuration > 0
+                ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
+                : 100;
 
               return (
                 <div
@@ -430,13 +480,29 @@ const LifeCountdowns = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">{countdown.icon || "⏳"}</span>
                       <div>
-                        <p className="font-medium text-sm">{countdown.title}</p>
+                        <p className="font-medium text-sm flex items-center gap-1">
+                          {countdown.is_pinned && <Star className="h-3 w-3 text-primary fill-primary" />}
+                          {countdown.title}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(countdown.target_time), "MMM d, yyyy")}
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={() =>
+                          countdown.is_pinned
+                            ? unpinCountdown.mutate(countdown.id)
+                            : pinCountdown.mutate(countdown.id)
+                        }
+                        title={countdown.is_pinned ? "Unpin" : "Pin to focus"}
+                      >
+                        <Star className={`h-3 w-3 ${countdown.is_pinned ? "text-primary fill-primary" : ""}`} />
+                      </Button>
                       <Button
                         size="icon"
                         variant="ghost"
@@ -456,8 +522,16 @@ const LifeCountdowns = () => {
                     </div>
                   </div>
 
+                  {/* Progress Bar */}
+                  <div className="mb-2">
+                    <Progress value={progressPercent} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
+                      {isPast ? "Event passed" : `${Math.round(progressPercent)}%`}
+                    </p>
+                  </div>
+
                   {time && (
-                    <div className="mt-2">
+                    <div>
                       {isPast ? (
                         <div className="flex items-center gap-1 text-primary">
                           <PartyPopper className="h-4 w-4" />
