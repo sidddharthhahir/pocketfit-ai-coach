@@ -27,6 +27,7 @@ import { FutureMessage } from "@/components/FutureMessage";
 import { TomorrowList } from "@/components/TomorrowList";
 import WorkoutCountdown from "@/components/WorkoutCountdown";
 import LifeCountdowns from "@/components/LifeCountdowns";
+import TodayFocus from "@/components/TodayFocus";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -105,6 +106,17 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Today's Focus */}
+      <TodayFocus
+        userId={userId}
+        todayCalories={stats.todayCalories}
+        todayProtein={stats.todayProtein}
+        calorieGoal={calorieGoal}
+        proteinGoal={proteinGoal}
+        todayWater={waterSleepStats.todayWater}
+        waterGoal={waterSleepStats.waterGoal}
+      />
+
       {/* Countdowns Section */}
       <div className="grid md:grid-cols-2 gap-6">
         <WorkoutCountdown />
