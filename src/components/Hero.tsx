@@ -29,7 +29,7 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
             tailored to your goals. Transform your fitness journey today.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex justify-center pt-4">
             <Button 
               variant="hero" 
               size="lg" 
@@ -37,13 +37,6 @@ export const Hero = ({ onGetStarted }: HeroProps) => {
               className="text-lg"
             >
               Start Your Journey
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="text-lg"
-            >
-              Learn More
             </Button>
           </div>
           
