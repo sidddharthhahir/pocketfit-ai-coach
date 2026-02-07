@@ -1,15 +1,9 @@
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingData } from "@/components/OnboardingForm";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useWaterSleepStats } from "@/hooks/useWaterSleepStats";
 import { useSleepTrends } from "@/hooks/useSleepTrends";
-import { useNavigate } from "react-router-dom";
-import { 
-  Dumbbell, Utensils, TrendingUp, Camera, ChevronRight,
-  Target, Scale, Activity, Droplets, Moon
-} from "lucide-react";
+import { useCollapsibleSections } from "@/hooks/useCollapsibleSections";
 import {
   MotivationalBanner,
   QuickStatsGrid,
@@ -17,6 +11,7 @@ import {
   WeeklyActivityChart,
   AchievementsCard,
 } from "@/components/dashboard";
+import { CollapsibleSection } from "@/components/dashboard/CollapsibleSection";
 import { WaterSleepCharts } from "@/components/dashboard/WaterSleepCharts";
 import { SleepTrendsCard } from "@/components/dashboard/SleepTrendsCard";
 import { WaterTracker } from "@/components/WaterTracker";
@@ -25,7 +20,6 @@ import { VisionBoard } from "@/components/VisionBoard";
 import { DreamJournal } from "@/components/DreamJournal";
 import { FutureMessage } from "@/components/FutureMessage";
 import { TomorrowList } from "@/components/TomorrowList";
-import WorkoutCountdown from "@/components/WorkoutCountdown";
 import LifeCountdowns from "@/components/LifeCountdowns";
 import TodayFocus from "@/components/TodayFocus";
 
@@ -35,10 +29,10 @@ interface DashboardPageProps {
 }
 
 export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
-  const navigate = useNavigate();
   const stats = useDashboardStats(userId);
   const waterSleepStats = useWaterSleepStats(userId, userData.weight);
   const sleepTrends = useSleepTrends(userId);
+  const { sections, toggle } = useCollapsibleSections();
 
   if (stats.isLoading || waterSleepStats.isLoading || sleepTrends.isLoading) {
     return (
@@ -57,7 +51,6 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
     );
   }
 
-  // Calculate calorie goal based on userData
   const bmr = userData.gender === "male"
     ? 88.362 + (13.397 * userData.weight) + (4.799 * userData.height) - (5.677 * userData.age)
     : 447.593 + (9.247 * userData.weight) + (3.098 * userData.height) - (4.330 * userData.age);
@@ -68,8 +61,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
   
   const calorieGoal = userData.goal === "cut" ? tdee - 500 :
     userData.goal === "bulk" ? tdee + 300 : tdee;
-
-  const proteinGoal = Math.round(userData.weight * 1.8); // 1.8g per kg
+  const proteinGoal = Math.round(userData.weight * 1.8);
 
   const quickStats = [
     {
@@ -106,191 +98,122 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Today's Focus */}
-      <TodayFocus
-        userId={userId}
-        todayCalories={stats.todayCalories}
-        todayProtein={stats.todayProtein}
-        calorieGoal={calorieGoal}
-        proteinGoal={proteinGoal}
-        todayWater={waterSleepStats.todayWater}
-        waterGoal={waterSleepStats.waterGoal}
-      />
-
-      {/* Countdowns Section */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <WorkoutCountdown />
-        <LifeCountdowns />
-      </div>
-
-      {/* Motivational Banner */}
-      <MotivationalBanner
-        todayWorkoutDone={stats.todayWorkoutDone}
-        currentStreak={stats.currentStreak}
-        suggestion="Let's make today count!"
-        actionLabel="Start Workout"
-        actionRoute="/workouts"
-      />
-
-      {/* Quick Stats */}
-      <QuickStatsGrid stats={quickStats} />
-
-      {/* Main Grid */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Weekly Activity Chart */}
-        <WeeklyActivityChart
-          workouts={stats.weeklyWorkouts}
-          meals={stats.weeklyMeals}
-          checkins={stats.weeklyCheckins}
-        />
-
-        {/* Streak Card */}
-        <StreakCard
-          currentStreak={stats.currentStreak}
-          longestStreak={stats.longestStreak}
-          totalDaysActive={stats.totalDaysActive}
-        />
-      </div>
-
-      {/* Water & Sleep Trackers */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <WaterTracker
+      {/* 🧭 Daily Essentials — always expanded by default */}
+      <CollapsibleSection
+        title="Daily Essentials"
+        icon="🧭"
+        isOpen={sections.daily}
+        onToggle={() => toggle("daily")}
+      >
+        <TodayFocus
           userId={userId}
-          todayTotal={waterSleepStats.todayWater}
-          dailyGoal={waterSleepStats.waterGoal}
-          onLog={waterSleepStats.refresh}
+          todayCalories={stats.todayCalories}
+          todayProtein={stats.todayProtein}
+          calorieGoal={calorieGoal}
+          proteinGoal={proteinGoal}
+          todayWater={waterSleepStats.todayWater}
+          waterGoal={waterSleepStats.waterGoal}
         />
-        <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
-        <DreamJournal userId={userId} />
-      </div>
+        <MotivationalBanner
+          todayWorkoutDone={stats.todayWorkoutDone}
+          currentStreak={stats.currentStreak}
+          suggestion="Let's make today count!"
+          actionLabel="Start Workout"
+          actionRoute="/workouts"
+        />
+        <QuickStatsGrid stats={quickStats} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <WaterTracker
+            userId={userId}
+            todayTotal={waterSleepStats.todayWater}
+            dailyGoal={waterSleepStats.waterGoal}
+            onLog={waterSleepStats.refresh}
+          />
+          <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
+          <DreamJournal userId={userId} />
+        </div>
+      </CollapsibleSection>
 
-      {/* Sleep Flow - Night Features */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <FutureMessage userId={userId} />
-        <TomorrowList userId={userId} />
-      </div>
+      {/* ⏳ Countdowns */}
+      <CollapsibleSection
+        title="Countdowns"
+        icon="⏳"
+        isOpen={sections.countdowns}
+        onToggle={() => toggle("countdowns")}
+      >
+        <LifeCountdowns />
+      </CollapsibleSection>
 
-      {/* Water & Sleep Charts */}
-      <WaterSleepCharts
-        weeklyWater={waterSleepStats.weeklyWater}
-        weeklySleep={waterSleepStats.weeklySleep}
-        waterGoal={waterSleepStats.waterGoal}
-        sleepGoal={waterSleepStats.sleepGoal}
-        aiInsights={waterSleepStats.aiInsights}
-      />
+      {/* 📊 Stats & Progress */}
+      <CollapsibleSection
+        title="Stats & Progress"
+        icon="📊"
+        isOpen={sections.stats}
+        onToggle={() => toggle("stats")}
+      >
+        <div className="grid lg:grid-cols-2 gap-6">
+          <WeeklyActivityChart
+            workouts={stats.weeklyWorkouts}
+            meals={stats.weeklyMeals}
+            checkins={stats.weeklyCheckins}
+          />
+          <StreakCard
+            currentStreak={stats.currentStreak}
+            longestStreak={stats.longestStreak}
+            totalDaysActive={stats.totalDaysActive}
+          />
+        </div>
+        <WaterSleepCharts
+          weeklyWater={waterSleepStats.weeklyWater}
+          weeklySleep={waterSleepStats.weeklySleep}
+          waterGoal={waterSleepStats.waterGoal}
+          sleepGoal={waterSleepStats.sleepGoal}
+          aiInsights={waterSleepStats.aiInsights}
+        />
+        <SleepTrendsCard
+          weeklyData={sleepTrends.weeklyData}
+          monthlyData={sleepTrends.monthlyData}
+          avgWeeklySleep={sleepTrends.avgWeeklySleep}
+          avgMonthlySleep={sleepTrends.avgMonthlySleep}
+          avgWeeklyQuality={sleepTrends.avgWeeklyQuality}
+          avgMonthlyQuality={sleepTrends.avgMonthlyQuality}
+          bestSleepDay={sleepTrends.bestSleepDay}
+          worstSleepDay={sleepTrends.worstSleepDay}
+          sleepWorkoutCorrelation={sleepTrends.sleepWorkoutCorrelation}
+          trendDirection={sleepTrends.trendDirection}
+          insights={sleepTrends.insights}
+        />
+      </CollapsibleSection>
 
-      {/* Sleep Trends & Workout Correlation */}
-      <SleepTrendsCard
-        weeklyData={sleepTrends.weeklyData}
-        monthlyData={sleepTrends.monthlyData}
-        avgWeeklySleep={sleepTrends.avgWeeklySleep}
-        avgMonthlySleep={sleepTrends.avgMonthlySleep}
-        avgWeeklyQuality={sleepTrends.avgWeeklyQuality}
-        avgMonthlyQuality={sleepTrends.avgMonthlyQuality}
-        bestSleepDay={sleepTrends.bestSleepDay}
-        worstSleepDay={sleepTrends.worstSleepDay}
-        sleepWorkoutCorrelation={sleepTrends.sleepWorkoutCorrelation}
-        trendDirection={sleepTrends.trendDirection}
-        insights={sleepTrends.insights}
-      />
+      {/* 🌙 Night & Reflection */}
+      <CollapsibleSection
+        title="Night & Reflection"
+        icon="🌙"
+        isOpen={sections.night}
+        onToggle={() => toggle("night")}
+      >
+        <div className="grid md:grid-cols-2 gap-6">
+          <FutureMessage userId={userId} />
+          <TomorrowList userId={userId} />
+        </div>
+      </CollapsibleSection>
 
-      {/* Vision Board */}
-      <VisionBoard userId={userId} />
-
-      {/* Achievements */}
-      <AchievementsCard
-        achievements={stats.achievements}
-        totalXP={stats.totalXP}
-        level={stats.level}
-        xpToNextLevel={stats.xpToNextLevel}
-        currentLevelXP={stats.currentLevelXP}
-      />
-
-      {/* Quick Actions & Stats */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6 border-border">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Your Profile
-          </h3>
-          <dl className="space-y-3">
-            <div className="flex justify-between py-2 border-b border-border/50">
-              <dt className="text-muted-foreground flex items-center gap-2">
-                <Scale className="w-4 h-4" /> Weight
-              </dt>
-              <dd className="font-semibold text-foreground">{userData.weight} kg</dd>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border/50">
-              <dt className="text-muted-foreground">Height</dt>
-              <dd className="font-semibold text-foreground">{userData.height} cm</dd>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border/50">
-              <dt className="text-muted-foreground">Age</dt>
-              <dd className="font-semibold text-foreground">{userData.age} years</dd>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border/50">
-              <dt className="text-muted-foreground flex items-center gap-2">
-                <Target className="w-4 h-4" /> Goal
-              </dt>
-              <dd className="font-semibold capitalize text-foreground">{userData.goal}</dd>
-            </div>
-            <div className="flex justify-between py-2">
-              <dt className="text-muted-foreground">Experience</dt>
-              <dd className="font-semibold capitalize text-foreground">{userData.experience}</dd>
-            </div>
-          </dl>
-        </Card>
-
-        <Card className="p-6 border-border">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-between group hover:border-primary/50"
-              onClick={() => navigate("/workouts")}
-            >
-              <span className="flex items-center gap-2">
-                <Dumbbell className="w-4 h-4 text-primary" />
-                Log Workout
-              </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-between group hover:border-secondary/50"
-              onClick={() => navigate("/nutrition")}
-            >
-              <span className="flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-secondary" />
-                Track Meal
-              </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-between group hover:border-accent/50"
-              onClick={() => navigate("/progress")}
-            >
-              <span className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-accent" />
-                View Progress
-              </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" />
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-between group hover:border-primary/50"
-              onClick={() => navigate("/photos")}
-            >
-              <span className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-primary" />
-                Gym Check-in
-              </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </Button>
-          </div>
-        </Card>
-      </div>
+      {/* 🏆 Motivation */}
+      <CollapsibleSection
+        title="Motivation"
+        icon="🏆"
+        isOpen={sections.motivation}
+        onToggle={() => toggle("motivation")}
+      >
+        <VisionBoard userId={userId} />
+        <AchievementsCard
+          achievements={stats.achievements}
+          totalXP={stats.totalXP}
+          level={stats.level}
+          xpToNextLevel={stats.xpToNextLevel}
+          currentLevelXP={stats.currentLevelXP}
+        />
+      </CollapsibleSection>
     </div>
   );
 };
