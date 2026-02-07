@@ -1,36 +1,128 @@
 # PocketFit AI Coach
 
-An AI-powered personal fitness coach that creates personalized workout plans, diet recommendations, and tracks your progress.
+PocketFit AI Coach is a **daily fitness and lifestyle companion** that helps you stay consistent with workouts, nutrition, habits, and important life events — all in one focused dashboard.
 
-## Features
+It combines AI-powered planning with practical daily tracking to reduce friction and improve long-term consistency.
 
-- 🎯 **Personalized Plans**: AI generates custom workout and diet plans based on your goals
-- 📊 **Progress Tracking**: Log weight, track workouts, visualize progress with charts
-- 🍽️ **Meal Logging**: Describe meals in natural language, AI calculates nutrition
-- 💪 **Workout Logger**: Track completed exercises with notes
-- 📈 **Weekly Insights**: AI-powered analysis of your fitness journey
-- 🏋️ **Form Checker**: Upload exercise photos for AI form feedback
-- 📹 **Exercise Tutor**: Visual guides with form cues and safety tips for each exercise
-- 📸 **Gym Check-in**: Photo attendance tracking with habit streaks and gallery
+---
 
-## Tech Stack
+## ✨ Key Features
 
-- React + TypeScript + Vite
-- Tailwind CSS + shadcn/ui
-- Supabase (Auth, Database, Edge Functions)
-- React Query, React Router
+### 🧭 Daily Focus
 
-## Setup
+* A single **Today’s Focus** panel showing what matters today
+* Surfaces:
+
+  * Next important countdown (workout or life event)
+  * Remaining calories, protein, and water
+* Designed for quick daily check-ins
+
+---
+
+### 🏋️ Fitness & Training
+
+* 🎯 **Personalized Workout Plans**
+  AI-generated plans based on goals, experience, and profile
+* 💪 **Workout Logger**
+  Log exercises with sets, reps, and weights
+* 🏋️ **Exercise Form Checker**
+  Upload exercise photos for AI-based form feedback
+* 📹 **Exercise Tutor**
+  Visual guides with cues and safety tips
+
+---
+
+### 🍽️ Nutrition
+
+* 🍽️ **Meal Logging**
+  Describe meals in natural language or upload photos
+* 🧠 **AI Nutrition Coach**
+  Chat-based guidance for diet and food choices
+* 📊 **Macro Tracking**
+  Daily calories, protein, and nutrition summaries
+
+---
+
+### 💧 Health & Habits
+
+* 💧 **Water Tracking** with daily goals
+* 😴 **Sleep Tracking** (hours, quality, trends)
+* 🌙 **Night & Reflection Tools**
+
+  * Dream journal with AI interpretation
+  * Tomorrow planning
+  * Messages to your future self
+
+---
+
+### ⏳ Countdowns & Motivation
+
+* ⏳ **Life & Workout Countdowns**
+
+  * Birthdays, goals, workouts, events
+  * Pin one important countdown
+  * Visual progress bars
+* 🏆 **Achievements & XP**
+
+  * Levels, milestones, and streaks
+* 🎯 **Commitments**
+
+  * Set weekly goals (workouts, meals, check-ins)
+  * Track consistency over time
+
+---
+
+### 📸 Progress & Accountability
+
+* 📈 **Progress Tracking**
+
+  * Weight logs and trends
+  * AI-generated weekly insights
+* 📸 **Gym Check-ins**
+
+  * Photo-based attendance tracking
+  * Visual progress timeline and comparisons
+* 👥 **Accountability Buddies**
+
+  * Invite friends
+  * View shared stats and progress
+
+---
+
+## 🖥️ Dashboard Design
+
+* Clean, **collapsible sections** for reduced cognitive load
+* Mobile-friendly layout
+* Daily Essentials expanded by default
+* User-controlled visibility for other sections
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** React, TypeScript, Vite
+* **UI:** Tailwind CSS, shadcn/ui
+* **Backend:** Supabase (Auth, Database, Edge Functions)
+* **State & Routing:** React Query, React Router
+* **AI:** Supabase Edge Functions (OpenAI-based)
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or bun
+
+* Node.js 18+
+* npm, pnpm, or bun
 
 ### Environment Variables
 
-The app uses Lovable Cloud, so environment variables are auto-configured:
-- `VITE_SUPABASE_URL` - Supabase project URL
-- `VITE_SUPABASE_PUBLISHABLE_KEY` - Supabase anon key
+This project uses **Lovable Cloud**, so environment variables are auto-configured:
+
+* `VITE_SUPABASE_URL`
+* `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+---
 
 ### Development
 
@@ -38,43 +130,69 @@ The app uses Lovable Cloud, so environment variables are auto-configured:
 # Install dependencies
 npm install
 
-# Start dev server
+# Start development server
 npm run dev
 ```
 
-Visit `http://localhost:5173`
+Visit: `http://localhost:5173`
 
-## User Flows
+---
 
-### Getting Started
-1. Click "Start Your Journey" on the landing page
+## 🔄 User Flow Overview
+
+### First Time
+
+1. Click **Start Your Journey**
 2. Sign up with email/password
-3. Complete the onboarding form (weight, height, goals, etc.)
-4. AI generates your personalized fitness plan
+3. Complete onboarding (profile, goals, experience)
+4. AI generates personalized workout & diet plans
 
-### Daily Usage
-1. **Diet Tab**: View today's meal plan, edit meals
-2. **Workout Tab**: View exercises, log completion
-3. **Log Tab**: Log meals and track workout progress
-4. **Progress Tab**: Log weight, generate weekly insights
-5. **Profile Tab**: Update your fitness profile
+### Daily Use
 
-## Architecture
+1. Check **Today’s Focus**
+2. Log workouts, meals, water, or sleep
+3. Track progress and streaks
+4. Review insights and countdowns
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed technical documentation.
+---
 
-## How to Edit
+## 🧱 Architecture
 
-**Use Lovable**
-Visit the [Lovable Project](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and start prompting.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for detailed system design and data flow.
 
-**Use your preferred IDE**
-Clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-## Deploy
+## ✏️ How to Edit
 
-Open [Lovable](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da) and click on Share -> Publish.
+### Use Lovable
 
-## License
+Edit visually and via prompts here:
+👉 [https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da](https://lovable.dev/projects/5feaeb36-a4e2-4bbd-bd46-2af293ee29da)
+
+### Use Your IDE
+
+1. Clone this repository
+2. Make changes locally
+3. Push changes — Lovable will sync automatically
+
+---
+
+## 🌍 Deployment
+
+Publish directly from Lovable:
+
+**Lovable → Share → Publish**
+
+---
+
+## 📦 Versioning
+
+**Current version:** v1.0 (feature-frozen, stable)
+
+Only bug fixes and performance improvements are accepted in this version.
+
+---
+
+## 📄 License
 
 MIT
