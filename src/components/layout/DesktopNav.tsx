@@ -11,6 +11,7 @@ import {
   Target,
   LogOut,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface DesktopNavProps {
   onSignOut: () => void;
@@ -55,11 +56,14 @@ export const DesktopNav = ({ onSignOut }: DesktopNavProps) => {
               ))}
             </nav>
 
-            {/* Sign Out */}
-            <Button variant="ghost" size="sm" onClick={onSignOut} className="shrink-0">
-              <LogOut className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Sign Out</span>
-            </Button>
+            {/* Theme Toggle & Sign Out */}
+            <div className="flex items-center gap-1 shrink-0">
+              <ThemeToggle />
+              <Button variant="ghost" size="sm" onClick={onSignOut}>
+                <LogOut className="w-4 h-4 lg:mr-2" />
+                <span className="hidden lg:inline">Sign Out</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
