@@ -7,6 +7,7 @@ import {
   User,
   MoreHorizontal,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,10 @@ export const MobileNav = () => {
                 <span>{item.label}</span>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuItem className="flex items-center gap-3 cursor-pointer" onSelect={(e) => e.preventDefault()}>
+              <ThemeToggle />
+              <span>Theme</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
