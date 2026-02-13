@@ -6,8 +6,10 @@ import {
   TrendingUp,
   User,
   MoreHorizontal,
+  Sun,
+  Moon,
 } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/components/ThemeProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Camera, Users, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const MobileThemeItem = () => {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  return (
+    <DropdownMenuItem
+      className="flex items-center gap-3 cursor-pointer"
+      onSelect={(e) => {
+        e.preventDefault();
+        setTheme(isDark ? "light" : "dark");
+      }}
+    >
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+    </DropdownMenuItem>
+  );
+};
 
 const mainNavItems = [
   { to: "/dashboard", label: "Home", icon: Home },
@@ -68,10 +88,7 @@ export const MobileNav = () => {
                 <span>{item.label}</span>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem className="flex items-center gap-3 cursor-pointer" onSelect={(e) => e.preventDefault()}>
-              <ThemeToggle />
-              <span>Theme</span>
-            </DropdownMenuItem>
+            <MobileThemeItem />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
