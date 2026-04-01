@@ -22,6 +22,13 @@ export const onboardingSchema = z.object({
     errorMap: () => ({ message: 'Please select your experience level' })
   }),
   dietaryPreference: z.string().min(1, 'Please select a dietary preference'),
+  activityLevel: z.enum(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active'], {
+    errorMap: () => ({ message: 'Please select your activity level' })
+  }),
+  workoutDaysPerWeek: z.number()
+    .int('Must be a whole number')
+    .min(2, 'Minimum 2 days per week')
+    .max(6, 'Maximum 6 days per week'),
 });
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
