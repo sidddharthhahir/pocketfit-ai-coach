@@ -14,6 +14,8 @@ const VALIDATION = {
   validGenders: ['male', 'female', 'other'],
   validGoals: ['bulk', 'cut', 'maintain'],
   validExperience: ['beginner', 'intermediate', 'advanced'],
+  validActivityLevels: ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active'],
+  workoutDays: { min: 2, max: 6 },
 };
 
 // Validate and sanitize user data
