@@ -68,6 +68,8 @@ const Index = () => {
           goal: data.goal,
           experience: data.experience,
           dietary_preference: data.dietaryPreference,
+          activity_level: data.activityLevel,
+          workout_days_per_week: data.workoutDaysPerWeek,
         });
 
       if (profileError) throw profileError;

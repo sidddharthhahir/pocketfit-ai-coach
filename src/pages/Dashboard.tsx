@@ -55,8 +55,14 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
     ? 88.362 + (13.397 * userData.weight) + (4.799 * userData.height) - (5.677 * userData.age)
     : 447.593 + (9.247 * userData.weight) + (3.098 * userData.height) - (4.330 * userData.age);
   
-  const activityMultiplier = userData.experience === "beginner" ? 1.375 : 
-    userData.experience === "intermediate" ? 1.55 : 1.725;
+  const activityMultipliers: Record<string, number> = {
+    sedentary: 1.2,
+    lightly_active: 1.375,
+    moderately_active: 1.55,
+    very_active: 1.725,
+    extra_active: 1.9,
+  };
+  const activityMultiplier = activityMultipliers[userData.activityLevel] || 1.55;
   const tdee = Math.round(bmr * activityMultiplier);
   
   const calorieGoal = userData.goal === "cut" ? tdee - 500 :
