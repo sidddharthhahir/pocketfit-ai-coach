@@ -115,50 +115,36 @@ serve(async (req) => {
 
     console.log('Generating fitness plan for user:', user.id);
 
-    // Use sanitized data in the prompt
+    const activityMultipliers: Record<string, number> = {
+      sedentary: 1.2,
+      lightly_active: 1.375,
+      moderately_active: 1.55,
+      very_active: 1.725,
+      extra_active: 1.9,
+    };
+    const activityMultiplier = activityMultipliers[sanitizedData.activityLevel] || 1.55;
+
     const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach + personal trainer + diet coach.
 Your tone: Energetic, supportive, motivating, clear, simple. No medical claims, no extreme dieting.
 
-CALORIE LOGIC:
+CALORIE LOGIC (use Mifflin-St Jeor equation):
+- Male BMR = 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161 + 5
+- Female BMR = 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161
+- Activity multiplier: ${activityMultiplier} (${sanitizedData.activityLevel})
 - Bulk: TDEE + 300
-- Cut: TDEE - 300
+- Cut: TDEE - 500
 - Maintain: TDEE
 Show calculation steps.
 
 PROTEIN LOGIC:
 1.6–2.2g × bodyweight (default: 1.8g × bodyweight)
 
-WORKOUT SCHEDULE LOGIC (WEEKLY):
-Create a FULL 7-DAY weekly workout schedule. Each day should have DIFFERENT exercises based on experience level:
+WORKOUT SCHEDULE LOGIC:
+Create a schedule for exactly ${sanitizedData.workoutDaysPerWeek} training days per week + rest days.
+Experience level: ${sanitizedData.experience}
 
-For Beginner:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Full Body A
-- Day 2 (Tuesday): Rest or Light Cardio
-- Day 3 (Wednesday): Full Body B
-- Day 4 (Thursday): Rest or Light Cardio
-- Day 5 (Friday): Full Body C
-- Day 6 (Saturday): Active Recovery
-
-For Intermediate:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Push (Chest, Shoulders, Triceps)
-- Day 2 (Tuesday): Pull (Back, Biceps)
-- Day 3 (Wednesday): Legs
-- Day 4 (Thursday): Push (variation)
-- Day 5 (Friday): Pull (variation)
-- Day 6 (Saturday): Legs (variation) or Active Recovery
-
-For Advanced:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Push (Heavy)
-- Day 2 (Tuesday): Pull (Heavy)
-- Day 3 (Wednesday): Legs (Heavy)
-- Day 4 (Thursday): Push (Volume)
-- Day 5 (Friday): Pull (Volume)
-- Day 6 (Saturday): Legs (Volume) or Arms + Abs
-
-Each workout must include: 5-7 exercises with sets/reps/rest
+Each workout day must include: 5-7 exercises with sets/reps/rest appropriate for ${sanitizedData.experience} level.
+Rest days should be marked clearly.
 
 DIET LOGIC:
 - Breakfast → high protein
@@ -174,6 +160,8 @@ User Stats:
 - Gender: ${sanitizedData.gender}
 - Goal: ${sanitizedData.goal}
 - Experience: ${sanitizedData.experience}
+- Activity Level: ${sanitizedData.activityLevel} (multiplier: ${activityMultiplier})
+- Workout Days/Week: ${sanitizedData.workoutDaysPerWeek}
 - Diet Preference: ${sanitizedData.dietaryPreference}
 
 Return ONLY valid JSON:
