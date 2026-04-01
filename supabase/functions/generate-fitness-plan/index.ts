@@ -24,9 +24,8 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: 'User data is required' };
   }
 
-  const { weight, height, age, gender, goal, experience, dietaryPreference } = userData;
+  const { weight, height, age, gender, goal, experience, dietaryPreference, activityLevel, workoutDaysPerWeek } = userData;
 
-  // Validate numeric fields
   if (typeof weight !== 'number' || weight < VALIDATION.weight.min || weight > VALIDATION.weight.max) {
     return { valid: false, error: `Weight must be between ${VALIDATION.weight.min} and ${VALIDATION.weight.max}kg` };
   }
@@ -39,7 +38,6 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: `Age must be between ${VALIDATION.age.min} and ${VALIDATION.age.max}` };
   }
 
-  // Validate enum fields
   if (!VALIDATION.validGenders.includes(gender)) {
     return { valid: false, error: 'Invalid gender value' };
   }
@@ -56,17 +54,21 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: 'Invalid dietary preference' };
   }
 
-  // Return sanitized data (bounded numbers, validated strings)
+  const validatedActivityLevel = VALIDATION.validActivityLevels.includes(activityLevel) ? activityLevel : 'moderately_active';
+  const validatedWorkoutDays = typeof workoutDaysPerWeek === 'number' && workoutDaysPerWeek >= VALIDATION.workoutDays.min && workoutDaysPerWeek <= VALIDATION.workoutDays.max ? workoutDaysPerWeek : 4;
+
   return {
     valid: true,
     sanitized: {
-      weight: Math.round(weight * 10) / 10, // Round to 1 decimal
+      weight: Math.round(weight * 10) / 10,
       height: Math.round(height),
       age: Math.floor(age),
       gender,
       goal,
       experience,
       dietaryPreference: dietaryPreference.slice(0, 50),
+      activityLevel: validatedActivityLevel,
+      workoutDaysPerWeek: validatedWorkoutDays,
     }
   };
 }
