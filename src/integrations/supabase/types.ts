@@ -319,6 +319,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activity_level: string
           age: number
           created_at: string | null
           dietary_preference: string
@@ -330,8 +331,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
           weight: number
+          workout_days_per_week: number
         }
         Insert: {
+          activity_level?: string
           age: number
           created_at?: string | null
           dietary_preference: string
@@ -343,8 +346,10 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           weight: number
+          workout_days_per_week?: number
         }
         Update: {
+          activity_level?: string
           age?: number
           created_at?: string | null
           dietary_preference?: string
@@ -356,6 +361,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           weight?: number
+          workout_days_per_week?: number
         }
         Relationships: []
       }
