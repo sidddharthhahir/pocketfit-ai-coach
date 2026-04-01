@@ -52,6 +52,8 @@ export const ProfileSection = ({ userId }: ProfileSectionProps) => {
           goal: editedProfile.goal,
           experience: editedProfile.experience,
           dietary_preference: editedProfile.dietary_preference,
+          activity_level: editedProfile.activity_level,
+          workout_days_per_week: editedProfile.workout_days_per_week,
         })
         .eq('user_id', userId);
 
