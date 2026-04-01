@@ -224,6 +224,46 @@ export const ProfileSection = ({ userId }: ProfileSectionProps) => {
                 <p className="text-lg font-semibold capitalize">{profile.dietary_preference}</p>
               )}
             </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Activity Level</label>
+              {isEditing ? (
+                <Select value={editedProfile.activity_level || 'moderately_active'} onValueChange={(value) => setEditedProfile({...editedProfile, activity_level: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sedentary">Sedentary</SelectItem>
+                    <SelectItem value="lightly_active">Lightly Active</SelectItem>
+                    <SelectItem value="moderately_active">Moderately Active</SelectItem>
+                    <SelectItem value="very_active">Very Active</SelectItem>
+                    <SelectItem value="extra_active">Extra Active</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-lg font-semibold capitalize">{(profile.activity_level || 'moderately_active').replace(/_/g, ' ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Workout Days / Week</label>
+              {isEditing ? (
+                <Select value={String(editedProfile.workout_days_per_week || 4)} onValueChange={(value) => setEditedProfile({...editedProfile, workout_days_per_week: parseInt(value)})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">2 days</SelectItem>
+                    <SelectItem value="3">3 days</SelectItem>
+                    <SelectItem value="4">4 days</SelectItem>
+                    <SelectItem value="5">5 days</SelectItem>
+                    <SelectItem value="6">6 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-lg font-semibold">{profile.workout_days_per_week || 4} days</p>
+              )}
+            </div>
           </div>
         </div>
       </Card>
