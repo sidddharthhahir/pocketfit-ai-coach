@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell, CheckCircle2, Info } from "lucide-react";
+import { Dumbbell, CheckCircle2, Info, Trash2, History } from "lucide-react";
 import { ExerciseTutorDialog } from "./ExerciseTutorDialog";
 import { toast } from "sonner";
 
@@ -12,14 +13,26 @@ interface WorkoutLoggerProps {
   userId: string;
 }
 
+interface WorkoutLogEntry {
+  id: string;
+  workout_date: string;
+  exercises: any;
+  completed: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
 export const WorkoutLogger = ({ userId }: WorkoutLoggerProps) => {
   const [todayWorkout, setTodayWorkout] = useState<any>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [recentLogs, setRecentLogs] = useState<WorkoutLogEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     loadTodayWorkout();
+    loadRecentLogs();
   }, [userId]);
 
   const loadTodayWorkout = async () => {
@@ -43,6 +56,25 @@ export const WorkoutLogger = ({ userId }: WorkoutLoggerProps) => {
       console.error('Error loading workout:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadRecentLogs = async () => {
+    try {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('workout_date', sevenDaysAgo.toISOString().split('T')[0])
+        .order('workout_date', { ascending: false });
+
+      if (error) throw error;
+      setRecentLogs((data || []) as WorkoutLogEntry[]);
+    } catch (error) {
+      console.error('Error loading workout logs:', error);
     }
   };
 
@@ -76,9 +108,25 @@ export const WorkoutLogger = ({ userId }: WorkoutLoggerProps) => {
       toast.success(allCompleted ? "Workout completed! 💪" : "Workout logged");
       setCompletedExercises(new Set());
       setNotes("");
+      loadRecentLogs();
     } catch (error: any) {
       console.error('Error logging workout:', error);
       toast.error('Failed to log workout');
+    }
+  };
+
+  const handleDeleteLog = async (logId: string) => {
+    try {
+      const { error } = await supabase
+        .from('workout_logs')
+        .delete()
+        .eq('id', logId);
+
+      if (error) throw error;
+      toast.success("Workout log deleted");
+      loadRecentLogs();
+    } catch (error) {
+      toast.error("Failed to delete log");
     }
   };
 
@@ -180,6 +228,68 @@ export const WorkoutLogger = ({ userId }: WorkoutLoggerProps) => {
             : `Log Workout (${completedExercises.size}/${todayWorkout.exercises.length})`
           }
         </Button>
+      </Card>
+
+      {/* Recent Workout History */}
+      <Card className="p-6 border-border shadow-card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+              <History className="w-5 h-5 text-secondary-foreground" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold">Recent Workouts</h3>
+              <p className="text-sm text-muted-foreground">Last 7 days</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setShowHistory(!showHistory)}>
+            {showHistory ? "Hide" : "Show"}
+          </Button>
+        </div>
+
+        {showHistory && (
+          recentLogs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No workouts logged this week</p>
+          ) : (
+            <div className="space-y-3">
+              {recentLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">
+                        {new Date(log.workout_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                      {log.completed && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {Array.isArray(log.exercises) ? `${log.exercises.length} exercises` : 'Workout'} 
+                      {log.notes && ` · ${log.notes.slice(0, 40)}${log.notes.length > 40 ? '...' : ''}`}
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this workout log?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will remove the workout from {new Date(log.workout_date).toLocaleDateString()}. This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteLog(log.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </Card>
     </div>
   );

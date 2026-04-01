@@ -50,6 +50,8 @@ export const AppRoutes = () => {
               | "intermediate"
               | "advanced",
             dietaryPreference: profile.dietary_preference,
+            activityLevel: (profile.activity_level || "moderately_active") as OnboardingData["activityLevel"],
+            workoutDaysPerWeek: profile.workout_days_per_week || 4,
           });
         } else {
           // No profile, redirect to onboarding

@@ -14,6 +14,8 @@ const VALIDATION = {
   validGenders: ['male', 'female', 'other'],
   validGoals: ['bulk', 'cut', 'maintain'],
   validExperience: ['beginner', 'intermediate', 'advanced'],
+  validActivityLevels: ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active'],
+  workoutDays: { min: 2, max: 6 },
 };
 
 // Validate and sanitize user data
@@ -22,9 +24,8 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: 'User data is required' };
   }
 
-  const { weight, height, age, gender, goal, experience, dietaryPreference } = userData;
+  const { weight, height, age, gender, goal, experience, dietaryPreference, activityLevel, workoutDaysPerWeek } = userData;
 
-  // Validate numeric fields
   if (typeof weight !== 'number' || weight < VALIDATION.weight.min || weight > VALIDATION.weight.max) {
     return { valid: false, error: `Weight must be between ${VALIDATION.weight.min} and ${VALIDATION.weight.max}kg` };
   }
@@ -37,7 +38,6 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: `Age must be between ${VALIDATION.age.min} and ${VALIDATION.age.max}` };
   }
 
-  // Validate enum fields
   if (!VALIDATION.validGenders.includes(gender)) {
     return { valid: false, error: 'Invalid gender value' };
   }
@@ -54,17 +54,21 @@ function validateUserData(userData: any): { valid: boolean; error?: string; sani
     return { valid: false, error: 'Invalid dietary preference' };
   }
 
-  // Return sanitized data (bounded numbers, validated strings)
+  const validatedActivityLevel = VALIDATION.validActivityLevels.includes(activityLevel) ? activityLevel : 'moderately_active';
+  const validatedWorkoutDays = typeof workoutDaysPerWeek === 'number' && workoutDaysPerWeek >= VALIDATION.workoutDays.min && workoutDaysPerWeek <= VALIDATION.workoutDays.max ? workoutDaysPerWeek : 4;
+
   return {
     valid: true,
     sanitized: {
-      weight: Math.round(weight * 10) / 10, // Round to 1 decimal
+      weight: Math.round(weight * 10) / 10,
       height: Math.round(height),
       age: Math.floor(age),
       gender,
       goal,
       experience,
       dietaryPreference: dietaryPreference.slice(0, 50),
+      activityLevel: validatedActivityLevel,
+      workoutDaysPerWeek: validatedWorkoutDays,
     }
   };
 }
@@ -111,50 +115,36 @@ serve(async (req) => {
 
     console.log('Generating fitness plan for user:', user.id);
 
-    // Use sanitized data in the prompt
+    const activityMultipliers: Record<string, number> = {
+      sedentary: 1.2,
+      lightly_active: 1.375,
+      moderately_active: 1.55,
+      very_active: 1.725,
+      extra_active: 1.9,
+    };
+    const activityMultiplier = activityMultipliers[sanitizedData.activityLevel] || 1.55;
+
     const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach + personal trainer + diet coach.
 Your tone: Energetic, supportive, motivating, clear, simple. No medical claims, no extreme dieting.
 
-CALORIE LOGIC:
+CALORIE LOGIC (use Mifflin-St Jeor equation):
+- Male BMR = 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161 + 5
+- Female BMR = 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161
+- Activity multiplier: ${activityMultiplier} (${sanitizedData.activityLevel})
 - Bulk: TDEE + 300
-- Cut: TDEE - 300
+- Cut: TDEE - 500
 - Maintain: TDEE
 Show calculation steps.
 
 PROTEIN LOGIC:
 1.6–2.2g × bodyweight (default: 1.8g × bodyweight)
 
-WORKOUT SCHEDULE LOGIC (WEEKLY):
-Create a FULL 7-DAY weekly workout schedule. Each day should have DIFFERENT exercises based on experience level:
+WORKOUT SCHEDULE LOGIC:
+Create a schedule for exactly ${sanitizedData.workoutDaysPerWeek} training days per week + rest days.
+Experience level: ${sanitizedData.experience}
 
-For Beginner:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Full Body A
-- Day 2 (Tuesday): Rest or Light Cardio
-- Day 3 (Wednesday): Full Body B
-- Day 4 (Thursday): Rest or Light Cardio
-- Day 5 (Friday): Full Body C
-- Day 6 (Saturday): Active Recovery
-
-For Intermediate:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Push (Chest, Shoulders, Triceps)
-- Day 2 (Tuesday): Pull (Back, Biceps)
-- Day 3 (Wednesday): Legs
-- Day 4 (Thursday): Push (variation)
-- Day 5 (Friday): Pull (variation)
-- Day 6 (Saturday): Legs (variation) or Active Recovery
-
-For Advanced:
-- Day 0 (Sunday): Rest
-- Day 1 (Monday): Push (Heavy)
-- Day 2 (Tuesday): Pull (Heavy)
-- Day 3 (Wednesday): Legs (Heavy)
-- Day 4 (Thursday): Push (Volume)
-- Day 5 (Friday): Pull (Volume)
-- Day 6 (Saturday): Legs (Volume) or Arms + Abs
-
-Each workout must include: 5-7 exercises with sets/reps/rest
+Each workout day must include: 5-7 exercises with sets/reps/rest appropriate for ${sanitizedData.experience} level.
+Rest days should be marked clearly.
 
 DIET LOGIC:
 - Breakfast → high protein
@@ -170,6 +160,8 @@ User Stats:
 - Gender: ${sanitizedData.gender}
 - Goal: ${sanitizedData.goal}
 - Experience: ${sanitizedData.experience}
+- Activity Level: ${sanitizedData.activityLevel} (multiplier: ${activityMultiplier})
+- Workout Days/Week: ${sanitizedData.workoutDaysPerWeek}
 - Diet Preference: ${sanitizedData.dietaryPreference}
 
 Return ONLY valid JSON:

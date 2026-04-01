@@ -2,23 +2,28 @@ import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Utensils, Loader2, Plus, Trash2, Camera, X, Image } from "lucide-react";
+import { Utensils, Loader2, Plus, Trash2, Camera, X, Image, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { mealDescriptionSchema } from "@/lib/validationSchemas";
 import { Progress } from "@/components/ui/progress";
+
+interface MealItem {
+  name: string;
+  estimated_cal: number;
+  estimated_protein_g: number;
+}
 
 interface MealLog {
   id: string;
   meal_type: string;
   total_calories: number;
   total_protein: number;
-  items: Array<{
-    name: string;
-    estimated_cal: number;
-    estimated_protein_g: number;
-  }>;
+  items: MealItem[];
   created_at: string;
 }
 
@@ -37,6 +42,12 @@ export const MealLogger = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit state
+  const [editingMeal, setEditingMeal] = useState<MealLog | null>(null);
+  const [editItems, setEditItems] = useState<MealItem[]>([]);
+  const [editMealType, setEditMealType] = useState<string>("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   useEffect(() => {
     loadTodayMeals();
@@ -164,7 +175,6 @@ export const MealLogger = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload image to storage
       const fileName = `${user.id}/${Date.now()}-${selectedImage.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('meal-photos')
@@ -172,16 +182,14 @@ export const MealLogger = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL for the AI to access
       const { data: signedUrlData } = await supabase.storage
         .from('meal-photos')
-        .createSignedUrl(fileName, 300); // 5 min expiry
+        .createSignedUrl(fileName, 300);
 
       if (!signedUrlData?.signedUrl) {
         throw new Error('Failed to get image URL');
       }
 
-      // Call AI to analyze the photo
       const { data, error } = await supabase.functions.invoke('analyze-meal-photo', {
         body: {
           imageUrl: signedUrlData.signedUrl,
@@ -214,6 +222,73 @@ export const MealLogger = () => {
       loadTodayMeals();
     } catch (error: any) {
       toast.error('Failed to delete meal');
+    }
+  };
+
+  // Edit handlers
+  const openEditDialog = (meal: MealLog) => {
+    setEditingMeal(meal);
+    setEditItems([...meal.items]);
+    setEditMealType(meal.meal_type);
+  };
+
+  const updateEditItem = (index: number, field: keyof MealItem, value: string | number) => {
+    const updated = [...editItems];
+    if (field === 'name') {
+      updated[index] = { ...updated[index], name: value as string };
+    } else if (field === 'estimated_cal') {
+      updated[index] = { ...updated[index], estimated_cal: Number(value) || 0 };
+    } else if (field === 'estimated_protein_g') {
+      updated[index] = { ...updated[index], estimated_protein_g: Number(value) || 0 };
+    }
+    setEditItems(updated);
+  };
+
+  const removeEditItem = (index: number) => {
+    if (editItems.length <= 1) {
+      toast.error("A meal must have at least one item");
+      return;
+    }
+    setEditItems(editItems.filter((_, i) => i !== index));
+  };
+
+  const addEditItem = () => {
+    setEditItems([...editItems, { name: "", estimated_cal: 0, estimated_protein_g: 0 }]);
+  };
+
+  const saveEdit = async () => {
+    if (!editingMeal) return;
+    
+    const validItems = editItems.filter(item => item.name.trim().length > 0);
+    if (validItems.length === 0) {
+      toast.error("Add at least one item with a name");
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const totalCalories = validItems.reduce((sum, item) => sum + item.estimated_cal, 0);
+      const totalProtein = validItems.reduce((sum, item) => sum + item.estimated_protein_g, 0);
+
+      const { error } = await supabase
+        .from('meal_logs')
+        .update({
+          meal_type: editMealType,
+          items: validItems as any,
+          total_calories: totalCalories,
+          total_protein: totalProtein,
+        })
+        .eq('id', editingMeal.id);
+
+      if (error) throw error;
+
+      toast.success("Meal updated");
+      setEditingMeal(null);
+      loadTodayMeals();
+    } catch (error: any) {
+      toast.error("Failed to update meal");
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -271,7 +346,6 @@ export const MealLogger = () => {
             </div>
           </div>
           
-          {/* Mode Toggle */}
           <div className="flex gap-1 bg-muted rounded-lg p-1">
             <Button
               variant={mode === 'text' ? 'secondary' : 'ghost'}
@@ -459,23 +533,48 @@ export const MealLogger = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <div className="text-right mr-1">
                       <p className="text-sm font-semibold text-primary">{meal.total_calories} kcal</p>
                       <p className="text-xs text-muted-foreground">{meal.total_protein}g protein</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteMeal(meal.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => openEditDialog(meal)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this meal?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will remove the {meal.meal_type} ({meal.total_calories} kcal) from today's log. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteMeal(meal.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {(meal.items as any[]).map((item, idx) => (
+                  {(meal.items as MealItem[]).map((item, idx) => (
                     <span
                       key={idx}
                       className="text-xs bg-background px-2 py-1 rounded-full"
@@ -489,6 +588,101 @@ export const MealLogger = () => {
           </div>
         )}
       </Card>
+
+      {/* Edit Meal Dialog */}
+      <Dialog open={!!editingMeal} onOpenChange={(open) => !open && setEditingMeal(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Meal</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Meal Type</label>
+              <Select value={editMealType} onValueChange={setEditMealType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="breakfast">🌅 Breakfast</SelectItem>
+                  <SelectItem value="lunch">☀️ Lunch</SelectItem>
+                  <SelectItem value="dinner">🌙 Dinner</SelectItem>
+                  <SelectItem value="snack">🍎 Snack</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Items</label>
+              {editItems.map((item, idx) => (
+                <div key={idx} className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      placeholder="Item name"
+                      value={item.name}
+                      onChange={(e) => updateEditItem(idx, 'name', e.target.value)}
+                      className="text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs text-muted-foreground">Calories</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={item.estimated_cal || ""}
+                          onChange={(e) => updateEditItem(idx, 'estimated_cal', e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-muted-foreground">Protein (g)</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={item.estimated_protein_g || ""}
+                          onChange={(e) => updateEditItem(idx, 'estimated_protein_g', e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 mt-1 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeEditItem(idx)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addEditItem} className="w-full">
+                <Plus className="w-4 h-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+
+            {editItems.length > 0 && (
+              <Card className="p-3 bg-muted/30 border-border">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total</span>
+                  <span className="font-medium">
+                    {editItems.reduce((s, i) => s + i.estimated_cal, 0)} kcal · {editItems.reduce((s, i) => s + i.estimated_protein_g, 0)}g protein
+                  </span>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMeal(null)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={isSavingEdit}>
+              {isSavingEdit ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
