@@ -5,7 +5,6 @@ import { useWaterSleepStats } from "@/hooks/useWaterSleepStats";
 import { useSleepTrends } from "@/hooks/useSleepTrends";
 import { useCollapsibleSections } from "@/hooks/useCollapsibleSections";
 import {
-  MotivationalBanner,
   QuickStatsGrid,
   StreakCard,
   WeeklyActivityChart,
@@ -17,11 +16,11 @@ import { SleepTrendsCard } from "@/components/dashboard/SleepTrendsCard";
 import { WaterTracker } from "@/components/WaterTracker";
 import { SleepTracker } from "@/components/SleepTracker";
 import { VisionBoard } from "@/components/VisionBoard";
-import { DreamJournal } from "@/components/DreamJournal";
 import { FutureMessage } from "@/components/FutureMessage";
 import { TomorrowList } from "@/components/TomorrowList";
 import LifeCountdowns from "@/components/LifeCountdowns";
 import TodayFocus from "@/components/TodayFocus";
+import { Compass, BarChart3, Moon, Timer } from "lucide-react";
 
 interface DashboardPageProps {
   userData: OnboardingData;
@@ -36,17 +35,14 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
 
   if (stats.isLoading || waterSleepStats.isLoading || sleepTrends.isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-24 w-full" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4">
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full" />
+            <Skeleton key={i} className="h-28 w-full rounded-xl" />
           ))}
         </div>
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Skeleton className="h-80 w-full" />
-          <Skeleton className="h-80 w-full" />
-        </div>
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -56,22 +52,17 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
     : 447.593 + (9.247 * userData.weight) + (3.098 * userData.height) - (4.330 * userData.age);
   
   const activityMultipliers: Record<string, number> = {
-    sedentary: 1.2,
-    lightly_active: 1.375,
-    moderately_active: 1.55,
-    very_active: 1.725,
-    extra_active: 1.9,
+    sedentary: 1.2, lightly_active: 1.375, moderately_active: 1.55,
+    very_active: 1.725, extra_active: 1.9,
   };
   const activityMultiplier = activityMultipliers[userData.activityLevel] || 1.55;
   const tdee = Math.round(bmr * activityMultiplier);
-  
-  const calorieGoal = userData.goal === "cut" ? tdee - 500 :
-    userData.goal === "bulk" ? tdee + 300 : tdee;
+  const calorieGoal = userData.goal === "cut" ? tdee - 500 : userData.goal === "bulk" ? tdee + 300 : tdee;
   const proteinGoal = Math.round(userData.weight * 1.8);
 
   const quickStats = [
     {
-      label: "Today's Calories",
+      label: "Calories",
       value: stats.todayCalories,
       unit: `/ ${calorieGoal}`,
       change: stats.todayCalories > 0 ? Math.round((stats.todayCalories / calorieGoal) * 100 - 100) : undefined,
@@ -79,35 +70,34 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
       color: "primary" as const,
     },
     {
-      label: "Today's Protein",
+      label: "Protein",
       value: stats.todayProtein,
       unit: `/ ${proteinGoal}g`,
       icon: "protein" as const,
-      color: "secondary" as const,
+      color: "accent" as const,
     },
     {
-      label: "Today's Water",
+      label: "Water",
       value: waterSleepStats.todayWater,
       unit: `/ ${waterSleepStats.waterGoal}ml`,
       icon: "water" as const,
       color: "blue" as const,
     },
     {
-      label: "Weekly Workouts",
+      label: "Workouts",
       value: stats.weeklyWorkoutCount,
-      unit: "sessions",
-      changeLabel: "This week",
+      unit: "this week",
       icon: "target" as const,
-      color: "accent" as const,
+      color: "secondary" as const,
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* 🧭 Daily Essentials — always expanded by default */}
+      {/* Daily Essentials */}
       <CollapsibleSection
         title="Daily Essentials"
-        icon="🧭"
+        icon={<Compass className="w-4 h-4 text-primary" />}
         isOpen={sections.daily}
         onToggle={() => toggle("daily")}
       >
@@ -120,15 +110,8 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           todayWater={waterSleepStats.todayWater}
           waterGoal={waterSleepStats.waterGoal}
         />
-        <MotivationalBanner
-          todayWorkoutDone={stats.todayWorkoutDone}
-          currentStreak={stats.currentStreak}
-          suggestion="Let's make today count!"
-          actionLabel="Start Workout"
-          actionRoute="/workouts"
-        />
         <QuickStatsGrid stats={quickStats} />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-4">
           <WaterTracker
             userId={userId}
             todayTotal={waterSleepStats.todayWater}
@@ -136,28 +119,27 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
             onLog={waterSleepStats.refresh}
           />
           <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
-          <DreamJournal userId={userId} />
         </div>
       </CollapsibleSection>
 
-      {/* ⏳ Countdowns */}
+      {/* Countdowns */}
       <CollapsibleSection
         title="Countdowns"
-        icon="⏳"
+        icon={<Timer className="w-4 h-4 text-chart-3" />}
         isOpen={sections.countdowns}
         onToggle={() => toggle("countdowns")}
       >
         <LifeCountdowns />
       </CollapsibleSection>
 
-      {/* 📊 Stats & Progress */}
+      {/* Stats & Progress */}
       <CollapsibleSection
         title="Stats & Progress"
-        icon="📊"
+        icon={<BarChart3 className="w-4 h-4 text-accent" />}
         isOpen={sections.stats}
         onToggle={() => toggle("stats")}
       >
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-4">
           <WeeklyActivityChart
             workouts={stats.weeklyWorkouts}
             meals={stats.weeklyMeals}
@@ -191,26 +173,17 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
         />
       </CollapsibleSection>
 
-      {/* 🌙 Night & Reflection */}
+      {/* Evening & Reflection */}
       <CollapsibleSection
-        title="Night & Reflection"
-        icon="🌙"
+        title="Evening & Reflection"
+        icon={<Moon className="w-4 h-4 text-chart-5" />}
         isOpen={sections.night}
         onToggle={() => toggle("night")}
       >
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4">
           <FutureMessage userId={userId} />
           <TomorrowList userId={userId} />
         </div>
-      </CollapsibleSection>
-
-      {/* 🏆 Motivation */}
-      <CollapsibleSection
-        title="Motivation"
-        icon="🏆"
-        isOpen={sections.motivation}
-        onToggle={() => toggle("motivation")}
-      >
         <VisionBoard userId={userId} />
         <AchievementsCard
           achievements={stats.achievements}
