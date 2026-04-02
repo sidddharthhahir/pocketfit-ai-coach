@@ -1,20 +1,12 @@
 import { NavLink } from "@/components/NavLink";
 import {
-  Home,
-  Dumbbell,
-  Utensils,
-  TrendingUp,
-  User,
-  MoreHorizontal,
-  Sun,
-  Moon,
+  Home, Dumbbell, Utensils, TrendingUp, User,
+  MoreHorizontal, Sun, Moon,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Camera, Users, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -55,13 +47,13 @@ export const MobileNav = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-50 safe-area-inset-bottom">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-xl border-t border-border/60 z-50 safe-area-inset-bottom">
+      <div className="flex items-center justify-around h-14 px-2">
         {mainNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
-            className="flex flex-col items-center justify-center gap-1 w-16 h-full text-muted-foreground transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 w-14 h-full text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
             <item.icon className="w-5 h-5" />
@@ -69,10 +61,9 @@ export const MobileNav = () => {
           </NavLink>
         ))}
 
-        {/* More Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex flex-col items-center justify-center gap-1 w-16 h-full text-muted-foreground hover:text-foreground transition-colors">
+            <button className="flex flex-col items-center justify-center gap-0.5 w-14 h-full text-muted-foreground hover:text-foreground transition-colors">
               <MoreHorizontal className="w-5 h-5" />
               <span className="text-[10px] font-medium">More</span>
             </button>
