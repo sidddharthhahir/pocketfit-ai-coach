@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 
 interface CollapsibleSectionProps {
   title: string;
-  icon: string;
+  icon: ReactNode;
   isOpen: boolean;
   onToggle: () => void;
   children: ReactNode;
@@ -17,22 +17,26 @@ export const CollapsibleSection = ({
   children,
 }: CollapsibleSectionProps) => {
   return (
-    <div className="space-y-4">
+    <div>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-2 px-1 group cursor-pointer"
+        className="w-full flex items-center justify-between py-3 px-4 rounded-xl bg-card border border-border hover:border-primary/20 transition-all group cursor-pointer mb-4"
       >
-        <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-          <span>{icon}</span>
+        <h2 className="text-base font-semibold flex items-center gap-2.5 text-foreground">
+          <span className="text-lg">{icon}</span>
           {title}
         </h2>
         <ChevronDown
-          className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
-      {isOpen && <div className="space-y-6 animate-in fade-in-0 slide-in-from-top-2 duration-200">{children}</div>}
+      {isOpen && (
+        <div className="space-y-4 animate-fade-up">
+          {children}
+        </div>
+      )}
     </div>
   );
 };
