@@ -20,14 +20,16 @@ export const CollapsibleSection = ({
     <div>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-3 px-4 rounded-xl bg-card border border-border hover:border-primary/20 transition-all group cursor-pointer mb-4"
+        className="w-full flex items-center justify-between py-3.5 px-5 rounded-2xl glass-card glow-border hover:shadow-card-hover transition-all duration-500 group cursor-pointer mb-4"
       >
         <h2 className="text-base font-semibold flex items-center gap-2.5 text-foreground">
-          <span className="text-lg">{icon}</span>
+          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors duration-300">
+            {icon}
+          </span>
           {title}
         </h2>
         <ChevronDown
-          className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${
+          className={`w-4 h-4 text-muted-foreground transition-transform duration-500 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
