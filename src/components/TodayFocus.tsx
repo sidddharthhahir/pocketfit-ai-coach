@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Droplets, Beef, Clock, Star } from "lucide-react";
+import { Dumbbell, Droplets, Beef, Clock, Star, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInSeconds } from "date-fns";
 import { useState, useEffect } from "react";
@@ -97,37 +97,42 @@ const TodayFocus = ({
   const waterPercent = Math.min(100, Math.round((todayWater / waterGoal) * 100));
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-5 space-y-4">
+    <Card className="overflow-hidden relative">
+      {/* Subtle animated gradient bg */}
+      <div className="absolute inset-0 bg-gradient-mesh opacity-50 pointer-events-none" />
+      
+      <CardContent className="p-5 space-y-4 relative z-10">
         {/* Pinned Countdown */}
         {focusCountdown && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+          <div className="flex items-center gap-3 p-3.5 rounded-xl glass-card border border-primary/15 group hover:border-primary/30 transition-all duration-300">
             {focusCountdown.is_pinned && (
-              <Star className="h-3.5 w-3.5 text-primary fill-primary flex-shrink-0" />
+              <Star className="h-4 w-4 text-primary fill-primary flex-shrink-0 animate-glow-pulse" />
             )}
             <span className="text-base">{focusCountdown.icon || "⏳"}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{focusCountdown.title}</p>
+              <p className="text-sm font-semibold truncate">{focusCountdown.title}</p>
               <p className="text-xs text-muted-foreground">
                 {format(new Date(focusCountdown.target_time), "MMM d, h:mm a")}
               </p>
             </div>
-            <p className="text-sm font-bold tabular-nums text-primary">
+            <p className="text-sm font-bold tabular-nums text-primary stat-glow">
               {formatCountdownTime(focusCountdown.target_time)}
             </p>
           </div>
         )}
 
         {/* Workout Status */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-          <Dumbbell className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/30 border border-border/50">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Dumbbell className="h-4 w-4 text-primary" />
+          </div>
           <p className="text-sm flex-1">
             {workoutCountdown
               ? `${workoutCountdown.title} — in ${formatCountdownTime(workoutCountdown.target_time)}`
               : "Rest / Light activity recommended"}
           </p>
           {!workoutCountdown && (
-            <Button size="sm" variant="ghost" onClick={() => navigate("/workouts")} className="text-xs h-7">
+            <Button size="sm" variant="ghost" onClick={() => navigate("/workouts")} className="text-xs h-7 hover:bg-primary/10 hover:text-primary">
               Plan
             </Button>
           )}
@@ -135,30 +140,25 @@ const TodayFocus = ({
 
         {/* Progress Bars */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3 w-3 text-primary" />
-              <span className="text-xs text-muted-foreground">Calories</span>
+          {[
+            { icon: Clock, label: "Calories", value: todayCalories, goal: calorieGoal, percent: calPercent, unit: "", color: "text-primary" },
+            { icon: Beef, label: "Protein", value: `${todayProtein}g`, goal: `${proteinGoal}g`, percent: proteinPercent, unit: "", color: "text-accent" },
+            { icon: Droplets, label: "Water", value: todayWater > 1000 ? `${(todayWater / 1000).toFixed(1)}L` : `${todayWater}ml`, goal: waterGoal > 1000 ? `${(waterGoal / 1000).toFixed(1)}L` : `${waterGoal}ml`, percent: waterPercent, unit: "", color: "text-chart-4" },
+          ].map((item) => (
+            <div key={item.label} className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <item.icon className={`h-3 w-3 ${item.color}`} />
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+              </div>
+              <div className="relative">
+                <Progress value={item.percent} className="h-2 rounded-full" />
+                {item.percent >= 100 && (
+                  <Sparkles className="absolute -right-1 -top-1 w-3 h-3 text-accent animate-glow-pulse" />
+                )}
+              </div>
+              <p className="text-xs font-medium">{item.value} <span className="text-muted-foreground">/ {item.goal}</span></p>
             </div>
-            <Progress value={calPercent} className="h-1.5" />
-            <p className="text-xs font-medium">{todayCalories} <span className="text-muted-foreground">/ {calorieGoal}</span></p>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <Beef className="h-3 w-3 text-accent" />
-              <span className="text-xs text-muted-foreground">Protein</span>
-            </div>
-            <Progress value={proteinPercent} className="h-1.5" />
-            <p className="text-xs font-medium">{todayProtein}g <span className="text-muted-foreground">/ {proteinGoal}g</span></p>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <Droplets className="h-3 w-3 text-chart-4" />
-              <span className="text-xs text-muted-foreground">Water</span>
-            </div>
-            <Progress value={waterPercent} className="h-1.5" />
-            <p className="text-xs font-medium">{todayWater > 1000 ? `${(todayWater / 1000).toFixed(1)}L` : `${todayWater}ml`} <span className="text-muted-foreground">/ {waterGoal > 1000 ? `${(waterGoal / 1000).toFixed(1)}L` : `${waterGoal}ml`}</span></p>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>
