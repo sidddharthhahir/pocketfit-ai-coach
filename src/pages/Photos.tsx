@@ -62,7 +62,6 @@ export const PhotosPage = ({ userId }: PhotosPageProps) => {
   const [allCheckins, setAllCheckins] = useState<CheckinData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<CheckinData | null>(null);
-  const [compareMode, setCompareMode] = useState(false);
   const [comparePhotos, setComparePhotos] = useState<CheckinData[]>([]);
 
   useEffect(() => {
