@@ -2,7 +2,7 @@ import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import {
   Home, Dumbbell, Utensils, TrendingUp, User,
-  Camera, Users, Target, LogOut,
+  Camera, Users, Target, LogOut, BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -18,6 +18,7 @@ const navItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
+  { to: "/gita", label: "Gita", icon: BookOpen },
   { to: "/profile", label: "Profile", icon: User },
 ];
 

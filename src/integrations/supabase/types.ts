@@ -254,6 +254,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gita_progress: {
+        Row: {
+          created_at: string
+          current_chapter: number
+          current_verse: number
+          id: string
+          last_read_at: string | null
+          total_verses_read: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_chapter?: number
+          current_verse?: number
+          id?: string
+          last_read_at?: string | null
+          total_verses_read?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_chapter?: number
+          current_verse?: number
+          id?: string
+          last_read_at?: string | null
+          total_verses_read?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gym_checkins: {
         Row: {
           ai_comment: string | null

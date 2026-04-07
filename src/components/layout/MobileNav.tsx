@@ -8,7 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Camera, Users, Target } from "lucide-react";
+import { Camera, Users, Target, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const MobileThemeItem = () => {
@@ -40,6 +40,7 @@ const moreNavItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
+  { to: "/gita", label: "Gita", icon: BookOpen },
   { to: "/profile", label: "Profile", icon: User },
 ];
 

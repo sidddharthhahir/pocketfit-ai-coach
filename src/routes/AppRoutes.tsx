@@ -16,6 +16,7 @@ import PhotosPage from "@/pages/Photos";
 import AccountabilityPage from "@/pages/Accountability";
 import CommitmentsPage from "@/pages/Commitments";
 import ProfilePage from "@/pages/Profile";
+import GitaPage from "@/pages/Gita";
 
 export const AppRoutes = () => {
   const navigate = useNavigate();
@@ -130,6 +131,10 @@ export const AppRoutes = () => {
         <Route
           path="/profile"
           element={<ProfilePage userId={user!.id} />}
+        />
+        <Route
+          path="/gita"
+          element={<GitaPage userId={user!.id} />}
         />
       </Routes>
     </MainLayout>
