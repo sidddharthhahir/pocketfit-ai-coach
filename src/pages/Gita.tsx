@@ -406,6 +406,27 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
           </Button>
         </div>
       )}
+
+      {/* Invite Section */}
+      <Card className="border-border/20 mt-8">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Invite someone to this journey</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter their email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="text-sm h-8"
+            />
+            <Button size="sm" onClick={handleInviteUser} disabled={inviting || !inviteEmail.trim()} className="text-xs h-8">
+              {inviting ? "Inviting..." : "Invite"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
