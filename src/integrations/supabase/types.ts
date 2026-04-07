@@ -254,6 +254,27 @@ export type Database = {
         }
         Relationships: []
       }
+      gita_access: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gita_progress: {
         Row: {
           created_at: string
@@ -628,6 +649,7 @@ export type Database = {
           workouts_count: number
         }[]
       }
+      has_gita_access: { Args: { _user_id: string }; Returns: boolean }
       lookup_buddy_invite: {
         Args: { p_invite_code: string }
         Returns: {
