@@ -1,15 +1,16 @@
 import { NavLink } from "@/components/NavLink";
 import {
   Home, Dumbbell, Utensils, TrendingUp, User,
-  MoreHorizontal, Sun, Moon,
+  MoreHorizontal, Sun, Moon, Camera, Users, Target, BookOpen,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Camera, Users, Target, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useGitaAccess } from "@/hooks/useGitaAccess";
+import { useAuth } from "@/hooks/useAuth";
 
 const MobileThemeItem = () => {
   const { theme, setTheme } = useTheme();
@@ -36,16 +37,21 @@ const mainNavItems = [
   { to: "/progress", label: "Progress", icon: TrendingUp },
 ];
 
-const moreNavItems = [
+const baseMoreItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
-  { to: "/gita", label: "Gita", icon: BookOpen },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
 export const MobileNav = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { hasAccess } = useGitaAccess(user?.id);
+
+  const moreNavItems = hasAccess
+    ? [...baseMoreItems.slice(0, 3), { to: "/gita", label: "Gita", icon: BookOpen }, baseMoreItems[3]]
+    : baseMoreItems;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-border/40 z-50 safe-area-inset-bottom">
