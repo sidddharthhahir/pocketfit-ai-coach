@@ -5,12 +5,14 @@ import {
   Camera, Users, Target, LogOut, BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useGitaAccess } from "@/hooks/useGitaAccess";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DesktopNavProps {
   onSignOut: () => void;
 }
 
-const navItems = [
+const baseNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: Home },
   { to: "/workouts", label: "Workouts", icon: Dumbbell },
   { to: "/nutrition", label: "Nutrition", icon: Utensils },
@@ -18,11 +20,17 @@ const navItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
-  { to: "/gita", label: "Gita", icon: BookOpen },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
 export const DesktopNav = ({ onSignOut }: DesktopNavProps) => {
+  const { user } = useAuth();
+  const { hasAccess } = useGitaAccess(user?.id);
+
+  const navItems = hasAccess
+    ? [...baseNavItems.slice(0, 7), { to: "/gita", label: "Gita", icon: BookOpen }, baseNavItems[7]]
+    : baseNavItems;
+
   return (
     <header className="hidden md:block glass-card border-b border-border/40 sticky top-0 z-50">
       <div className="w-full px-4 sm:px-6 lg:px-8">

@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, Layers, MessageCircle, BookOpen, X } from "lucide-react";
+import { ChevronRight, Layers, MessageCircle, BookOpen, X, Lock, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useGitaAccess } from "@/hooks/useGitaAccess";
+import { Input } from "@/components/ui/input";
 
 // Verse counts per chapter in Bhagavad Gita
 const CHAPTER_VERSE_COUNTS = [
@@ -36,6 +38,9 @@ interface GitaPageProps {
 
 export const GitaPage = ({ userId }: GitaPageProps) => {
   const { toast } = useToast();
+  const { hasAccess, loading: accessLoading } = useGitaAccess(userId);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
   const [chapter, setChapter] = useState(1);
   const [verse, setVerse] = useState(1);
   const [verseData, setVerseData] = useState<VerseData | null>(null);
@@ -46,10 +51,30 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
   const [questionAnswer, setQuestionAnswer] = useState<QuestionAnswer | null>(null);
   const [questionLoading, setQuestionLoading] = useState(false);
   const [totalRead, setTotalRead] = useState(0);
-  const [revealStage, setRevealStage] = useState(0); // 0=shlok, 1=meaning, 2=full
+  const [revealStage, setRevealStage] = useState(0);
+
+  const handleInviteUser = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      // Look up user by email via a simple approach - the inviter grants access
+      // For now, we use the email to find the user id
+      const { data, error } = await supabase.functions.invoke("gita-verse", {
+        body: { action: "grant_access", email: inviteEmail.trim() },
+      });
+      if (error) throw error;
+      toast({ title: "Access Granted", description: `${inviteEmail} now has access to the Gita journey.` });
+      setInviteEmail("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Could not grant access.", variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
 
   // Load progress
   useEffect(() => {
+    if (!hasAccess || accessLoading) return;
     const loadProgress = async () => {
       const { data } = await supabase
         .from("gita_progress")
@@ -62,7 +87,6 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         setVerse(data.current_verse || 1);
         setTotalRead(data.total_verses_read);
       } else {
-        // Create initial progress
         await supabase.from("gita_progress").insert({
           user_id: userId,
           current_chapter: 1,
@@ -73,7 +97,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       }
     };
     loadProgress();
-  }, [userId]);
+  }, [userId, hasAccess, accessLoading]);
 
   const fetchVerse = useCallback(async (ch: number, v: number) => {
     setLoading(true);
@@ -90,7 +114,6 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       if (error) throw error;
       setVerseData(data);
 
-      // Staged reveal
       setTimeout(() => setRevealStage(1), 800);
       setTimeout(() => setRevealStage(2), 1600);
     } catch (err: any) {
@@ -100,12 +123,37 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
     }
   }, [toast]);
 
-  // Fetch verse when chapter/verse changes
   useEffect(() => {
-    if (chapter && verse) {
+    if (hasAccess && !accessLoading && chapter && verse) {
       fetchVerse(chapter, verse);
     }
-  }, [chapter, verse, fetchVerse]);
+  }, [chapter, verse, fetchVerse, hasAccess, accessLoading]);
+
+  // Access denied view
+  if (!accessLoading && !hasAccess) {
+    return (
+      <div className="max-w-md mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <Lock className="w-7 h-7 text-primary/60" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">Exclusive Access Only</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            The Bhagavad Gita journey is a private, invite-only experience. 
+            Ask someone with access to invite you.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessLoading) {
+    return (
+      <div className="max-w-2xl mx-auto flex items-center justify-center min-h-[60vh]">
+        <Skeleton className="h-8 w-48" />
+      </div>
+    );
+  }
 
   const saveProgress = async (ch: number, v: number, incrementRead: boolean) => {
     const updates: any = {
@@ -358,6 +406,27 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
           </Button>
         </div>
       )}
+
+      {/* Invite Section */}
+      <Card className="border-border/20 mt-8">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Invite someone to this journey</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter their email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="text-sm h-8"
+            />
+            <Button size="sm" onClick={handleInviteUser} disabled={inviting || !inviteEmail.trim()} className="text-xs h-8">
+              {inviting ? "Inviting..." : "Invite"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

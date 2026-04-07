@@ -30,13 +30,89 @@ OUTPUT FORMAT (respond in valid JSON only):
 
 CRITICAL: Respond ONLY with the JSON object. No markdown, no backticks, no extra text.`;
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { chapter, verse, action, question } = await req.json();
+    const body = await req.json();
+    const { action } = body;
+
+    // Handle grant_access action separately
+    if (action === "grant_access") {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+
+      // Verify caller has access
+      const anonClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims, error: claimsErr } = await anonClient.auth.getClaims(token);
+      if (claimsErr || !claims?.claims?.sub) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const callerId = claims.claims.sub;
+
+      // Check caller has gita access
+      const { data: callerAccess } = await supabase
+        .from("gita_access")
+        .select("id")
+        .eq("user_id", callerId)
+        .maybeSingle();
+
+      if (!callerAccess) {
+        return new Response(JSON.stringify({ error: "You don't have permission to invite others." }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Find user by email
+      const { email } = body;
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email is required." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: users, error: userErr } = await supabase.auth.admin.listUsers();
+      const targetUser = users?.users?.find((u: any) => u.email === email);
+      if (!targetUser) {
+        return new Response(JSON.stringify({ error: "No user found with that email." }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Grant access
+      const { error: insertErr } = await supabase
+        .from("gita_access")
+        .upsert({ user_id: targetUser.id, granted_by: callerId }, { onConflict: "user_id" });
+
+      if (insertErr) throw insertErr;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Regular verse actions
+    const { chapter, verse, question } = body;
 
     let userPrompt = "";
 
