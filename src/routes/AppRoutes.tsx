@@ -136,6 +136,7 @@ export const AppRoutes = () => {
           path="/gita"
           element={<GitaPage userId={user!.id} />}
         />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </MainLayout>
   );
