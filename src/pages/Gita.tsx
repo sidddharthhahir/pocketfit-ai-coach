@@ -72,6 +72,63 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
     }
   };
 
+  // Load progress
+  useEffect(() => {
+    if (!hasAccess || accessLoading) return;
+    const loadProgress = async () => {
+      const { data } = await supabase
+        .from("gita_progress")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (data) {
+        setChapter(data.current_chapter);
+        setVerse(data.current_verse || 1);
+        setTotalRead(data.total_verses_read);
+      } else {
+        await supabase.from("gita_progress").insert({
+          user_id: userId,
+          current_chapter: 1,
+          current_verse: 1,
+        });
+        setChapter(1);
+        setVerse(1);
+      }
+    };
+    loadProgress();
+  }, [userId, hasAccess, accessLoading]);
+
+  const fetchVerse = useCallback(async (ch: number, v: number) => {
+    setLoading(true);
+    setVerseData(null);
+    setRevealStage(0);
+    setQuestionAnswer(null);
+    setQuestionMode(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("gita-verse", {
+        body: { chapter: ch, verse: v, action: "read" },
+      });
+
+      if (error) throw error;
+      setVerseData(data);
+
+      setTimeout(() => setRevealStage(1), 800);
+      setTimeout(() => setRevealStage(2), 1600);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (hasAccess && !accessLoading && chapter && verse) {
+      fetchVerse(chapter, verse);
+    }
+  }, [chapter, verse, fetchVerse, hasAccess, accessLoading]);
+
   // Access denied view
   if (!accessLoading && !hasAccess) {
     return (
@@ -97,65 +154,6 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       </div>
     );
   }
-
-  // Load progress
-  useEffect(() => {
-    const loadProgress = async () => {
-      const { data } = await supabase
-        .from("gita_progress")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (data) {
-        setChapter(data.current_chapter);
-        setVerse(data.current_verse || 1);
-        setTotalRead(data.total_verses_read);
-      } else {
-        // Create initial progress
-        await supabase.from("gita_progress").insert({
-          user_id: userId,
-          current_chapter: 1,
-          current_verse: 1,
-        });
-        setChapter(1);
-        setVerse(1);
-      }
-    };
-    loadProgress();
-  }, [userId]);
-
-  const fetchVerse = useCallback(async (ch: number, v: number) => {
-    setLoading(true);
-    setVerseData(null);
-    setRevealStage(0);
-    setQuestionAnswer(null);
-    setQuestionMode(false);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("gita-verse", {
-        body: { chapter: ch, verse: v, action: "read" },
-      });
-
-      if (error) throw error;
-      setVerseData(data);
-
-      // Staged reveal
-      setTimeout(() => setRevealStage(1), 800);
-      setTimeout(() => setRevealStage(2), 1600);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-
-  // Fetch verse when chapter/verse changes
-  useEffect(() => {
-    if (chapter && verse) {
-      fetchVerse(chapter, verse);
-    }
-  }, [chapter, verse, fetchVerse]);
 
   const saveProgress = async (ch: number, v: number, incrementRead: boolean) => {
     const updates: any = {
