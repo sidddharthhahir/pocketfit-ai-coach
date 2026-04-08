@@ -4,33 +4,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, Layers, MessageCircle, BookOpen, X, Lock, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  ChevronRight, Layers, MessageCircle, BookOpen, X,
+  Lock, UserPlus, Bookmark, Map,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGitaAccess } from "@/hooks/useGitaAccess";
-import { Input } from "@/components/ui/input";
-
-// Verse counts per chapter in Bhagavad Gita
-const CHAPTER_VERSE_COUNTS = [
-  47, 72, 43, 42, 29, 47, 30, 28, 34, 42,
-  55, 20, 35, 27, 20, 24, 28, 78,
-];
-
-interface VerseData {
-  reference: string;
-  shlok: string | null;
-  transliteration: string | null;
-  meaning: string;
-  context: string;
-  deeper_understanding: string;
-  reflection: string;
-  insight: string;
-  chapter_intro: string | null;
-}
-
-interface QuestionAnswer {
-  answer: string;
-  related_verse: string | null;
-}
+import { useGitaBookmarks } from "@/hooks/useGitaBookmarks";
+import { CHAPTER_VERSE_COUNTS, TOTAL_VERSES, VerseData, QuestionAnswer } from "@/components/gita/constants";
+import { ChapterMap } from "@/components/gita/ChapterMap";
+import { JournalEntry } from "@/components/gita/JournalEntry";
+import { BookmarkList } from "@/components/gita/BookmarkList";
 
 interface GitaPageProps {
   userId: string;
@@ -39,6 +24,7 @@ interface GitaPageProps {
 export const GitaPage = ({ userId }: GitaPageProps) => {
   const { toast } = useToast();
   const { hasAccess, loading: accessLoading } = useGitaAccess(userId);
+  const { isBookmarked, toggleBookmark } = useGitaBookmarks(userId);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [chapter, setChapter] = useState(1);
@@ -52,25 +38,8 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
   const [questionLoading, setQuestionLoading] = useState(false);
   const [totalRead, setTotalRead] = useState(0);
   const [revealStage, setRevealStage] = useState(0);
-
-  const handleInviteUser = async () => {
-    if (!inviteEmail.trim()) return;
-    setInviting(true);
-    try {
-      // Look up user by email via a simple approach - the inviter grants access
-      // For now, we use the email to find the user id
-      const { data, error } = await supabase.functions.invoke("gita-verse", {
-        body: { action: "grant_access", email: inviteEmail.trim() },
-      });
-      if (error) throw error;
-      toast({ title: "Access Granted", description: `${inviteEmail} now has access to the Gita journey.` });
-      setInviteEmail("");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Could not grant access.", variant: "destructive" });
-    } finally {
-      setInviting(false);
-    }
-  };
+  const [showChapterMap, setShowChapterMap] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
 
   // Load progress
   useEffect(() => {
@@ -110,10 +79,8 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       const { data, error } = await supabase.functions.invoke("gita-verse", {
         body: { chapter: ch, verse: v, action: "read" },
       });
-
       if (error) throw error;
       setVerseData(data);
-
       setTimeout(() => setRevealStage(1), 800);
       setTimeout(() => setRevealStage(2), 1600);
     } catch (err: any) {
@@ -129,7 +96,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
     }
   }, [chapter, verse, fetchVerse, hasAccess, accessLoading]);
 
-  // Access denied view
+  // Access denied
   if (!accessLoading && !hasAccess) {
     return (
       <div className="max-w-md mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
@@ -139,7 +106,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-foreground">Exclusive Access Only</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            The Bhagavad Gita journey is a private, invite-only experience. 
+            The Bhagavad Gita journey is a private, invite-only experience.
             Ask someone with access to invite you.
           </p>
         </div>
@@ -166,17 +133,12 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       updates.total_verses_read = totalRead + 1;
       setTotalRead((prev) => prev + 1);
     }
-
-    await supabase
-      .from("gita_progress")
-      .update(updates)
-      .eq("user_id", userId);
+    await supabase.from("gita_progress").update(updates).eq("user_id", userId);
   };
 
   const handleNext = async () => {
     let nextChapter = chapter;
     let nextVerse = verse + 1;
-
     if (nextVerse > CHAPTER_VERSE_COUNTS[chapter - 1]) {
       if (chapter < 18) {
         nextChapter = chapter + 1;
@@ -186,10 +148,16 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         return;
       }
     }
-
     await saveProgress(nextChapter, nextVerse, true);
     setChapter(nextChapter);
     setVerse(nextVerse);
+  };
+
+  const handleNavigate = (ch: number, v: number) => {
+    setShowChapterMap(false);
+    setChapter(ch);
+    setVerse(v);
+    saveProgress(ch, v, false);
   };
 
   const handleExplainDeeper = async () => {
@@ -225,8 +193,25 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
     }
   };
 
-  const totalVerses = CHAPTER_VERSE_COUNTS.reduce((a, b) => a + b, 0);
-  const progressPercent = Math.round((totalRead / totalVerses) * 100);
+  const handleInviteUser = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gita-verse", {
+        body: { action: "grant_access", email: inviteEmail.trim() },
+      });
+      if (error) throw error;
+      toast({ title: "Access Granted", description: `${inviteEmail} now has access to the Gita journey.` });
+      setInviteEmail("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Could not grant access.", variant: "destructive" });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const progressPercent = Math.round((totalRead / TOTAL_VERSES) * 100);
+  const bookmarked = isBookmarked(chapter, verse);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -237,16 +222,48 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
           <h1 className="text-xl font-semibold text-foreground tracking-tight">Bhagavad Gita</h1>
         </div>
         <p className="text-xs text-muted-foreground">
-          {totalRead} of {totalVerses} verses read · {progressPercent}% complete
+          {totalRead} of {TOTAL_VERSES} verses read · {progressPercent}% complete
         </p>
-        {/* Minimal progress bar */}
         <div className="w-32 mx-auto h-0.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary/60 rounded-full transition-all duration-700"
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div className="h-full bg-primary/60 rounded-full transition-all duration-700" style={{ width: `${progressPercent}%` }} />
+        </div>
+        {/* Quick actions */}
+        <div className="flex items-center justify-center gap-2 pt-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setShowChapterMap(!showChapterMap); setShowBookmarks(false); }}
+            className="text-[10px] text-muted-foreground h-7"
+          >
+            <Map className="w-3 h-3 mr-1" />
+            Chapters
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setShowBookmarks(!showBookmarks); setShowChapterMap(false); }}
+            className="text-[10px] text-muted-foreground h-7"
+          >
+            <Bookmark className="w-3 h-3 mr-1" />
+            Saved
+          </Button>
         </div>
       </div>
+
+      {/* Chapter Map */}
+      {showChapterMap && (
+        <ChapterMap
+          currentChapter={chapter}
+          currentVerse={verse}
+          totalRead={totalRead}
+          onNavigate={handleNavigate}
+        />
+      )}
+
+      {/* Bookmarks List */}
+      {showBookmarks && (
+        <BookmarkList userId={userId} onNavigate={handleNavigate} onClose={() => setShowBookmarks(false)} />
+      )}
 
       {/* Verse Card */}
       {loading ? (
@@ -261,72 +278,60 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
       ) : verseData ? (
         <Card className="border-border/30 overflow-hidden">
           <CardContent className="p-6 sm:p-8 space-y-6">
-            {/* Chapter Intro */}
             {verseData.chapter_intro && (
               <div className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-4 animate-fade-in">
                 {verseData.chapter_intro}
               </div>
             )}
 
-            {/* Reference */}
-            <p className="text-xs text-primary/70 font-medium tracking-widest uppercase text-center animate-fade-in">
-              {verseData.reference}
-            </p>
+            {/* Reference + Bookmark */}
+            <div className="flex items-center justify-center gap-3 animate-fade-in">
+              <p className="text-xs text-primary/70 font-medium tracking-widest uppercase">
+                {verseData.reference}
+              </p>
+              <button
+                onClick={() => toggleBookmark(chapter, verse)}
+                className="transition-all duration-300"
+                title={bookmarked ? "Remove bookmark" : "Bookmark this verse"}
+              >
+                <Bookmark
+                  className={`w-4 h-4 transition-colors ${
+                    bookmarked ? "fill-primary text-primary" : "text-muted-foreground/40 hover:text-primary/60"
+                  }`}
+                />
+              </button>
+            </div>
 
-            {/* Shlok - always visible */}
             {verseData.shlok && (
               <div className="text-center space-y-2 animate-fade-in">
-                <p className="text-lg leading-relaxed text-foreground font-serif">
-                  {verseData.shlok}
-                </p>
+                <p className="text-lg leading-relaxed text-foreground font-serif">{verseData.shlok}</p>
                 {verseData.transliteration && (
-                  <p className="text-sm text-muted-foreground italic">
-                    {verseData.transliteration}
-                  </p>
+                  <p className="text-sm text-muted-foreground italic">{verseData.transliteration}</p>
                 )}
               </div>
             )}
 
-            {/* Meaning - stage 1 */}
-            <div
-              className={`transition-all duration-700 ${
-                revealStage >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
-            >
+            <div className={`transition-all duration-700 ${revealStage >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Meaning</p>
                 <p className="text-sm text-foreground leading-relaxed">{verseData.meaning}</p>
               </div>
             </div>
 
-            {/* Full content - stage 2 */}
-            <div
-              className={`space-y-5 transition-all duration-700 ${
-                revealStage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
-            >
-              {/* Context */}
+            <div className={`space-y-5 transition-all duration-700 ${revealStage >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Context</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">{verseData.context}</p>
               </div>
-
-              {/* Deeper Understanding */}
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Deeper Understanding</p>
                 <p className="text-sm text-foreground/80 leading-relaxed">{verseData.deeper_understanding}</p>
               </div>
-
-              {/* Reflection */}
               <div className="bg-primary/5 rounded-xl p-4 space-y-1">
                 <p className="text-[10px] text-primary uppercase tracking-widest font-medium">Today's Reflection</p>
                 <p className="text-sm text-foreground leading-relaxed">{verseData.reflection}</p>
               </div>
-
-              {/* Insight */}
-              <p className="text-center text-sm text-muted-foreground italic">
-                "{verseData.insight}"
-              </p>
+              <p className="text-center text-sm text-muted-foreground italic">"{verseData.insight}"</p>
             </div>
           </CardContent>
         </Card>
@@ -361,9 +366,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
               className="min-h-[60px] text-sm resize-none bg-transparent border-border/30"
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="ghost" size="sm" onClick={() => { setQuestionMode(false); setQuestion(""); }}>
-                Cancel
-              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { setQuestionMode(false); setQuestion(""); }}>Cancel</Button>
               <Button size="sm" onClick={handleAskQuestion} disabled={questionLoading || !question.trim()}>
                 {questionLoading ? "Reflecting..." : "Ask"}
               </Button>
@@ -374,33 +377,17 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
 
       {/* Actions */}
       {!loading && verseData && revealStage >= 2 && (
-        <div className="flex items-center justify-center gap-3 animate-fade-in">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleExplainDeeper}
-            disabled={deeperLoading}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
+        <div className="flex flex-wrap items-center justify-center gap-2 animate-fade-in">
+          <Button variant="ghost" size="sm" onClick={handleExplainDeeper} disabled={deeperLoading} className="text-xs text-muted-foreground hover:text-foreground">
             <Layers className="w-3.5 h-3.5 mr-1.5" />
             {deeperLoading ? "Expanding..." : "Explain Deeper"}
           </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setQuestionMode(true)}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setQuestionMode(true)} className="text-xs text-muted-foreground hover:text-foreground">
             <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
             Ask
           </Button>
-
-          <Button
-            size="sm"
-            onClick={handleNext}
-            className="text-xs"
-          >
+          <JournalEntry userId={userId} chapter={chapter} verse={verse} />
+          <Button size="sm" onClick={handleNext} className="text-xs">
             Next Verse
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Button>
@@ -415,12 +402,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
             <p className="text-xs text-muted-foreground">Invite someone to this journey</p>
           </div>
           <div className="flex gap-2">
-            <Input
-              placeholder="Enter their email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="text-sm h-8"
-            />
+            <Input placeholder="Enter their email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="text-sm h-8" />
             <Button size="sm" onClick={handleInviteUser} disabled={inviting || !inviteEmail.trim()} className="text-xs h-8">
               {inviting ? "Inviting..." : "Invite"}
             </Button>

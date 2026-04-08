@@ -20,6 +20,7 @@ import { FutureMessage } from "@/components/FutureMessage";
 import { TomorrowList } from "@/components/TomorrowList";
 import LifeCountdowns from "@/components/LifeCountdowns";
 import TodayFocus from "@/components/TodayFocus";
+import { GitaDashboardWidget } from "@/components/gita/GitaDashboardWidget";
 import { Compass, BarChart3, Moon, Timer } from "lucide-react";
 
 interface DashboardPageProps {
@@ -120,6 +121,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           />
           <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
         </div>
+        <GitaDashboardWidget userId={userId} />
       </CollapsibleSection>
 
       {/* Countdowns */}
