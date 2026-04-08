@@ -121,6 +121,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           />
           <SleepTracker userId={userId} onLog={waterSleepStats.refresh} />
         </div>
+        <GitaDashboardWidget userId={userId} />
       </CollapsibleSection>
 
       {/* Countdowns */}
