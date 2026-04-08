@@ -275,13 +275,75 @@ export type Database = {
         }
         Relationships: []
       }
+      gita_bookmarks: {
+        Row: {
+          chapter: number
+          created_at: string
+          id: string
+          note: string | null
+          user_id: string
+          verse: number
+        }
+        Insert: {
+          chapter: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id: string
+          verse: number
+        }
+        Update: {
+          chapter?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+          verse?: number
+        }
+        Relationships: []
+      }
+      gita_journal: {
+        Row: {
+          chapter: number
+          created_at: string
+          id: string
+          mood: string | null
+          reflection: string
+          updated_at: string
+          user_id: string
+          verse: number
+        }
+        Insert: {
+          chapter: number
+          created_at?: string
+          id?: string
+          mood?: string | null
+          reflection: string
+          updated_at?: string
+          user_id: string
+          verse: number
+        }
+        Update: {
+          chapter?: number
+          created_at?: string
+          id?: string
+          mood?: string | null
+          reflection?: string
+          updated_at?: string
+          user_id?: string
+          verse?: number
+        }
+        Relationships: []
+      }
       gita_progress: {
         Row: {
           created_at: string
           current_chapter: number
+          current_streak: number
           current_verse: number
           id: string
           last_read_at: string | null
+          longest_streak: number
           total_verses_read: number
           updated_at: string
           user_id: string
@@ -289,9 +351,11 @@ export type Database = {
         Insert: {
           created_at?: string
           current_chapter?: number
+          current_streak?: number
           current_verse?: number
           id?: string
           last_read_at?: string | null
+          longest_streak?: number
           total_verses_read?: number
           updated_at?: string
           user_id: string
@@ -299,9 +363,11 @@ export type Database = {
         Update: {
           created_at?: string
           current_chapter?: number
+          current_streak?: number
           current_verse?: number
           id?: string
           last_read_at?: string | null
+          longest_streak?: number
           total_verses_read?: number
           updated_at?: string
           user_id?: string
