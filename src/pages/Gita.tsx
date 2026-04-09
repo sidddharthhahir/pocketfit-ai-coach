@@ -189,9 +189,13 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         body: { chapter, verse, action: "question", question: question.trim() },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setQuestionAnswer(data);
+      setQuestionMode(false);
+      setQuestion("");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      console.error("Ask question error:", err);
+      toast({ title: "Error", description: err.message || "Something went wrong", variant: "destructive" });
     } finally {
       setQuestionLoading(false);
     }
