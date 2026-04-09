@@ -167,11 +167,15 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         body: { chapter, verse, action: "explain_deeper" },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       if (data?.deeper_understanding) {
         setVerseData((prev) => prev ? { ...prev, deeper_understanding: data.deeper_understanding } : prev);
+      } else {
+        toast({ title: "No response", description: "Could not get a deeper explanation. Please try again.", variant: "destructive" });
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      console.error("Explain deeper error:", err);
+      toast({ title: "Error", description: err.message || "Something went wrong", variant: "destructive" });
     } finally {
       setDeeperLoading(false);
     }
@@ -185,9 +189,13 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         body: { chapter, verse, action: "question", question: question.trim() },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setQuestionAnswer(data);
+      setQuestionMode(false);
+      setQuestion("");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      console.error("Ask question error:", err);
+      toast({ title: "Error", description: err.message || "Something went wrong", variant: "destructive" });
     } finally {
       setQuestionLoading(false);
     }
