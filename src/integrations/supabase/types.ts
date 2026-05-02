@@ -485,6 +485,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rest_days: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          rest_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          rest_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          rest_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sleep_logs: {
         Row: {
           bed_time: string | null
