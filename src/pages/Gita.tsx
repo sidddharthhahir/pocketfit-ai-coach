@@ -394,15 +394,15 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         <div className="flex flex-wrap items-center justify-center gap-2 animate-fade-in">
           <Button variant="ghost" size="sm" onClick={handleExplainDeeper} disabled={deeperLoading} className="text-xs text-muted-foreground hover:text-foreground">
             <Layers className="w-3.5 h-3.5 mr-1.5" />
-            {deeperLoading ? "Expanding..." : "Explain Deeper"}
+            {deeperLoading ? "..." : t("explainDeeper")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setQuestionMode(true)} className="text-xs text-muted-foreground hover:text-foreground">
             <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-            Ask
+            {t("askQuestion")}
           </Button>
           <JournalEntry userId={userId} chapter={chapter} verse={verse} />
           <Button size="sm" onClick={handleNext} className="text-xs">
-            Next Verse
+            {t("next")}
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </div>
