@@ -10,7 +10,7 @@ export const OnboardingHint = ({ onDismiss }: OnboardingHintProps) => {
     <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-primary text-primary-foreground rounded-lg p-4 shadow-glow z-50 animate-in slide-in-from-bottom-4">
       <div className="flex items-start gap-3">
         <div className="flex-1">
-          <p className="text-sm font-medium mb-1">Welcome to FitAI! 👋</p>
+          <p className="text-sm font-medium mb-1">Welcome to BoomStartAI! 👋</p>
           <p className="text-xs opacity-90">
             Use the navigation bar to switch between Workouts, Nutrition, Progress, and more.
           </p>
