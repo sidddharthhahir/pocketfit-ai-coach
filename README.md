@@ -1,6 +1,6 @@
-# PocketFit AI Coach
+# BoomStartAI
 
-Your daily fitness and lifestyle companion — AI-powered workout plans, nutrition tracking, habit logging, and accountability tools in one clean dashboard.
+Your daily fitness, mindfulness, and lifestyle companion — AI-powered workouts, nutrition, habits, reflection, and accountability in one clean dashboard.
 
 ---
 
@@ -9,46 +9,55 @@ Your daily fitness and lifestyle companion — AI-powered workout plans, nutriti
 ### 🧭 Daily Focus
 - **Today's Focus** panel — next countdown, remaining calories/protein/water at a glance
 - Quick daily check-in designed for speed
+- Collapsible dashboard sections (Daily Essentials, Countdowns, Stats & Progress, Evening & Reflection)
 
 ### 🏋️ Workouts
-- **AI Workout Plans** — personalized by goal, experience, and body profile
-- **Workout Logger** — log exercises with sets, reps, weights; edit history to fix mistakes
+- **AI Workout Plans** personalized by goal, experience, body profile
+- **Workout Logger** with sets, reps, weights, and editable history
 - **Exercise Form Checker** — upload photos for AI form feedback
 - **Exercise Tutor** — visual guides with cues and safety tips
 
 ### 🍽️ Nutrition
-- **Meal Logging** — natural language or photo-based, with edit history
-- **AI Nutrition Coach** — chat-based diet guidance
-- **Macro Tracking** — daily calories, protein, and nutrition summaries
-- **Diet Plan** — AI-generated personalized meal plans
+- **Meal Logging** via natural language or photo analysis
+- **AI Nutrition Coach** chat
+- **Macro Tracking** (calories, protein, daily summaries)
+- **AI Diet Plan** generation
 
 ### 💧 Health & Habits
 - **Water Tracking** with daily goals
-- **Sleep Tracking** — hours, quality, trends, AI sleep analysis
-- **Dream Journal** — log dreams with AI interpretation
-- **Tomorrow Planning** — prepare tomorrow's tasks tonight
-- **Future Messages** — write notes to your future self
+- **Sleep Tracking** + AI sleep analysis
+- **Dream Journal** with AI interpretation
+- **Tomorrow Planning** & **Future Messages** to your future self
 
 ### ⏳ Countdowns & Motivation
-- **Life & Workout Countdowns** — birthdays, goals, events with progress bars
-- **Achievements & XP** — levels, milestones, and streaks
-- **Vision Board** — set and track aspirational goals
-- **Commitment Goals** — weekly targets for workouts, meals, and check-ins
+- **Life & Workout Countdowns** with progress bars
+- **Achievements, XP & Streaks**
+- **Vision Board** & **Commitment Goals**
 
 ### 📸 Photos & Progress
-- **Weight Tracking** — logs and trend charts
-- **AI Weekly Insights** — automated progress analysis
-- **Gym Check-ins** — photo-based attendance with AI verification
-- **Photo Timeline & Compare** — side-by-side progress comparison
+- **Weight Tracking** with trend charts
+- **AI Weekly Insights**
+- **Gym Check-ins** (photo-verified)
+- **Photo Timeline & Compare**
 
 ### 👥 Accountability
-- **Buddy System** — invite friends via code, view shared weekly stats and streaks
+- **Buddy System** — invite friends, share weekly stats and streaks
+
+### 📿 Bhagavad Gita (invite-only)
+- Daily verse with translation and reflection
+- **Explain Deeper** & **Ask a Question** powered by AI
+- **Personal Journal** for private reflections per verse
+- **Bookmarks & Favorites** for meaningful verses
+- **Chapter Overview Map** across all 18 chapters
+- **Reading Streaks** (current & longest)
+- **Dashboard widget** for daily verse + progress
+- Per-user access control — only granted users see it
 
 ---
 
 ## 🔒 Onboarding
 
-New users complete a mandatory onboarding form (weight, height, age, gender, goal, experience, dietary preference, activity level, workout days/week). This data drives all AI-generated plans — no generic templates.
+New users complete a mandatory onboarding form (weight, height, age, gender, goal, experience, dietary preference, activity level, workout days/week). All AI plans are generated from this profile — no generic templates.
 
 ---
 
@@ -58,16 +67,17 @@ New users complete a mandatory onboarding form (weight, height, age, gender, goa
 |-------|------|
 | Frontend | React 18, TypeScript 5, Vite 5 |
 | Styling | Tailwind CSS 3, shadcn/ui |
-| Backend | Lovable Cloud (Supabase — Auth, Database, Edge Functions, Storage) |
+| Backend | Lovable Cloud (Auth, Database, Edge Functions, Storage) |
 | State | React Query, React Router 6 |
-| AI | Edge Functions calling AI models for plans, form analysis, nutrition chat, sleep insights, weekly insights |
+| AI | Edge Functions calling Lovable AI Gateway (Gemini / GPT models) |
 
 ### Key Patterns
-- **Multi-page layout** with `MainLayout` → `DesktopNav` + `MobileNav`
-- **Collapsible dashboard sections** — Daily Essentials, Countdowns, Stats & Progress, Evening & Reflection
+- Multi-page layout: `MainLayout` → `DesktopNav` + `MobileNav`
+- Collapsible dashboard sections
 - **RLS everywhere** — all tables protected with row-level security
-- **Glassmorphism UI** with dark/light theme toggle
-- **Mobile-first** responsive design with bottom nav
+- Role-based access via `user_roles` table + security-definer `has_role()`
+- Glassmorphism UI with dark/light theme toggle
+- Mobile-first responsive design with bottom nav
 
 ---
 
@@ -87,9 +97,9 @@ Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) are
 ## 🔄 User Flow
 
 ### First Time
-1. Land on hero page → **Start Your Journey**
+1. Land on hero → **Start Your Journey**
 2. Sign up with email/password
-3. Complete onboarding (profile, goals, experience)
+3. Complete onboarding
 4. AI generates personalized workout + diet plans
 5. Redirected to dashboard
 
@@ -97,7 +107,8 @@ Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) are
 1. Check **Today's Focus**
 2. Log workouts, meals, water, sleep
 3. Track streaks, countdowns, commitments
-4. Review AI insights
+4. Reflect with Gita verse + journal (if enabled)
+5. Review AI insights
 
 ---
 
@@ -105,18 +116,19 @@ Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) are
 
 ```
 src/
-├── pages/           # Route pages (Dashboard, Workouts, Nutrition, etc.)
+├── pages/           # Route pages (Dashboard, Workouts, Nutrition, Gita, etc.)
 ├── components/      # Feature components
-│   ├── dashboard/   # Dashboard-specific cards and charts
+│   ├── dashboard/   # Dashboard cards & charts
+│   ├── gita/        # Gita widgets, chapter map, journal, bookmarks
 │   ├── layout/      # MainLayout, DesktopNav, MobileNav
 │   └── ui/          # shadcn/ui primitives
-├── hooks/           # Custom hooks (auth, stats, sleep trends)
-├── lib/             # Utilities and validation schemas
+├── hooks/           # Custom hooks (auth, stats, gita access, etc.)
+├── lib/             # Utilities & validation schemas
 ├── routes/          # AppRoutes with auth guard
-└── integrations/    # Supabase client and types
+└── integrations/    # Supabase client & types
 
 supabase/
-├── functions/       # Edge functions (AI plan generation, form analysis, etc.)
+├── functions/       # Edge functions (AI plan generation, gita-verse, etc.)
 └── config.toml      # Project configuration
 ```
 

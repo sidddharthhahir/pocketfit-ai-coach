@@ -82,7 +82,7 @@ serve(async (req) => {
 
     const planData = currentPlan.plan_data as any;
 
-    const systemPrompt = `You are PocketFit AI, an advanced fitness coach.
+    const systemPrompt = `You are BoomStartAI, an advanced fitness coach.
 Adjust the user's fitness plan based on the situation.
 
 AUTO-ADJUST RULES:

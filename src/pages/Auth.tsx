@@ -112,7 +112,7 @@ const Auth = () => {
             <Dumbbell className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            PocketFit AI
+            BoomStartAI
           </h1>
         </div>
 

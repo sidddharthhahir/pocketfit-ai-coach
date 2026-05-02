@@ -156,7 +156,7 @@ serve(async (req) => {
 
     console.log('Parsing meal for user:', user.id);
 
-    const systemPrompt = `You are PocketFit AI, an expert nutritionist.
+    const systemPrompt = `You are BoomStartAI, an expert nutritionist.
 Parse the user's meal description and estimate calories and protein for each food item.
 
 MEAL PARSING RULES:

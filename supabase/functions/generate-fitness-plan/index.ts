@@ -124,7 +124,7 @@ serve(async (req) => {
     };
     const activityMultiplier = activityMultipliers[sanitizedData.activityLevel] || 1.55;
 
-    const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach + personal trainer + diet coach.
+    const systemPrompt = `You are BoomStartAI, an advanced AI fitness coach + personal trainer + diet coach.
 Your tone: Energetic, supportive, motivating, clear, simple. No medical claims, no extreme dieting.
 
 CALORIE LOGIC (use Mifflin-St Jeor equation):

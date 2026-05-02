@@ -71,7 +71,7 @@ serve(async (req) => {
       ? weightLogs.data[0].weight - weightLogs.data[weightLogs.data.length - 1].weight
       : 0;
 
-    const systemPrompt = `You are PocketFit AI, an advanced AI fitness coach.
+    const systemPrompt = `You are BoomStartAI, an advanced AI fitness coach.
 Tone: Energetic, supportive, motivating, clear. Provide actionable insights.
 
 INSIGHTS LOGIC:
