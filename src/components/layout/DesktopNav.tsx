@@ -38,7 +38,7 @@ export const DesktopNav = ({ onSignOut }: DesktopNavProps) => {
           <div className="flex items-center justify-between h-14">
             <NavLink to="/dashboard" className="flex items-center gap-2 shrink-0">
               <h1 className="text-lg font-bold shimmer-text">
-                FitAI
+                BoomStartAI
               </h1>
             </NavLink>
 
