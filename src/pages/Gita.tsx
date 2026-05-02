@@ -25,6 +25,7 @@ interface GitaPageProps {
 
 export const GitaPage = ({ userId }: GitaPageProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation("gita");
   const { hasAccess, loading: accessLoading } = useGitaAccess(userId);
   const { isBookmarked, toggleBookmark } = useGitaBookmarks(userId);
   const [inviteEmail, setInviteEmail] = useState("");
