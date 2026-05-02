@@ -227,13 +227,16 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 relative">
+        <div className="absolute right-0 top-0">
+          <LanguageSwitch />
+        </div>
         <div className="flex items-center justify-center gap-2">
           <BookOpen className="w-5 h-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">Bhagavad Gita</h1>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">{t("title")}</h1>
         </div>
         <p className="text-xs text-muted-foreground">
-          {totalRead} of {TOTAL_VERSES} verses read · {progressPercent}% complete
+          {totalRead} / {TOTAL_VERSES} · {progressPercent}%
         </p>
         <div className="w-32 mx-auto h-0.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full bg-primary/60 rounded-full transition-all duration-700" style={{ width: `${progressPercent}%` }} />
@@ -247,7 +250,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
             className="text-[10px] text-muted-foreground h-7"
           >
             <Map className="w-3 h-3 mr-1" />
-            Chapters
+            {t("chapterMap")}
           </Button>
           <Button
             variant="ghost"
@@ -256,7 +259,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
             className="text-[10px] text-muted-foreground h-7"
           >
             <Bookmark className="w-3 h-3 mr-1" />
-            Saved
+            {t("bookmarks")}
           </Button>
         </div>
       </div>
