@@ -1,8 +1,8 @@
-# PocketFit AI Coach - Architecture
+# BoomStartAI Coach - Architecture
 
 ## Overview
 
-PocketFit AI is a full-stack fitness coaching application built with React + TypeScript frontend and Supabase backend. The app provides AI-powered personalized workout and diet plans.
+BoomStartAI is a full-stack fitness coaching application built with React + TypeScript frontend and Supabase backend. The app provides AI-powered personalized workout and diet plans.
 
 ## Tech Stack
 

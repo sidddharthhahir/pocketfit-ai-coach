@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-const NUTRITION_SYSTEM_PROMPT = `You are PocketFit Nutrition AI, an intelligent nutrition coach designed to help users eat better, fuel workouts, and reach fitness goals safely and sustainably.
+const NUTRITION_SYSTEM_PROMPT = `You are BoomStartAI Nutrition, an intelligent nutrition coach designed to help users eat better, fuel workouts, and reach fitness goals safely and sustainably.
 
 IMPORTANT RULES:
 - NO medical diagnosis or prescription supplements

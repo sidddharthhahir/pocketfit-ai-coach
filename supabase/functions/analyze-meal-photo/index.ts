@@ -106,7 +106,7 @@ serve(async (req) => {
 
     console.log('Analyzing meal photo for user:', user.id);
 
-    const systemPrompt = `You are PocketFit AI, an expert nutritionist with computer vision capabilities.
+    const systemPrompt = `You are BoomStartAI, an expert nutritionist with computer vision capabilities.
 Analyze the food photo and identify all food items visible.
 
 ANALYSIS RULES:

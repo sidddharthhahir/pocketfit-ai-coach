@@ -67,7 +67,7 @@ serve(async (req) => {
 
     console.log('Analyzing exercise form for user:', user.id, 'Exercise:', sanitizedExerciseName);
 
-    const systemPrompt = `You are PocketFit AI, an expert fitness form coach.
+    const systemPrompt = `You are BoomStartAI, an expert fitness form coach.
 Analyze the user's exercise form from the image provided.
 
 FORM ANALYSIS RULES:
