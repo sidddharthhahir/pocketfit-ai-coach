@@ -21,6 +21,7 @@ import { TomorrowList } from "@/components/TomorrowList";
 import LifeCountdowns from "@/components/LifeCountdowns";
 import TodayFocus from "@/components/TodayFocus";
 import { GitaDashboardWidget } from "@/components/gita/GitaDashboardWidget";
+import { RestDayToggle } from "@/components/RestDayToggle";
 import { Compass, BarChart3, Moon, Timer } from "lucide-react";
 
 interface DashboardPageProps {
@@ -111,6 +112,9 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
           todayWater={waterSleepStats.todayWater}
           waterGoal={waterSleepStats.waterGoal}
         />
+        <div className="flex justify-end">
+          <RestDayToggle userId={userId} />
+        </div>
         <QuickStatsGrid stats={quickStats} />
         <div className="grid md:grid-cols-2 gap-4">
           <WaterTracker

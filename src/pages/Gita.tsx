@@ -16,6 +16,8 @@ import { CHAPTER_VERSE_COUNTS, TOTAL_VERSES, VerseData, QuestionAnswer } from "@
 import { ChapterMap } from "@/components/gita/ChapterMap";
 import { JournalEntry } from "@/components/gita/JournalEntry";
 import { BookmarkList } from "@/components/gita/BookmarkList";
+import { LanguageSwitch } from "@/components/gita/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 interface GitaPageProps {
   userId: string;
@@ -23,6 +25,7 @@ interface GitaPageProps {
 
 export const GitaPage = ({ userId }: GitaPageProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation("gita");
   const { hasAccess, loading: accessLoading } = useGitaAccess(userId);
   const { isBookmarked, toggleBookmark } = useGitaBookmarks(userId);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -224,13 +227,16 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 relative">
+        <div className="absolute right-0 top-0">
+          <LanguageSwitch />
+        </div>
         <div className="flex items-center justify-center gap-2">
           <BookOpen className="w-5 h-5 text-primary" />
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">Bhagavad Gita</h1>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">{t("title")}</h1>
         </div>
         <p className="text-xs text-muted-foreground">
-          {totalRead} of {TOTAL_VERSES} verses read · {progressPercent}% complete
+          {totalRead} / {TOTAL_VERSES} · {progressPercent}%
         </p>
         <div className="w-32 mx-auto h-0.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full bg-primary/60 rounded-full transition-all duration-700" style={{ width: `${progressPercent}%` }} />
@@ -244,7 +250,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
             className="text-[10px] text-muted-foreground h-7"
           >
             <Map className="w-3 h-3 mr-1" />
-            Chapters
+            {t("chapterMap")}
           </Button>
           <Button
             variant="ghost"
@@ -253,7 +259,7 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
             className="text-[10px] text-muted-foreground h-7"
           >
             <Bookmark className="w-3 h-3 mr-1" />
-            Saved
+            {t("bookmarks")}
           </Button>
         </div>
       </div>
@@ -388,15 +394,15 @@ export const GitaPage = ({ userId }: GitaPageProps) => {
         <div className="flex flex-wrap items-center justify-center gap-2 animate-fade-in">
           <Button variant="ghost" size="sm" onClick={handleExplainDeeper} disabled={deeperLoading} className="text-xs text-muted-foreground hover:text-foreground">
             <Layers className="w-3.5 h-3.5 mr-1.5" />
-            {deeperLoading ? "Expanding..." : "Explain Deeper"}
+            {deeperLoading ? "..." : t("explainDeeper")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setQuestionMode(true)} className="text-xs text-muted-foreground hover:text-foreground">
             <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-            Ask
+            {t("askQuestion")}
           </Button>
           <JournalEntry userId={userId} chapter={chapter} verse={verse} />
           <Button size="sm" onClick={handleNext} className="text-xs">
-            Next Verse
+            {t("next")}
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </div>
