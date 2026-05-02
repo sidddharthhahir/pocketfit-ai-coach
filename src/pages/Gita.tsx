@@ -16,6 +16,8 @@ import { CHAPTER_VERSE_COUNTS, TOTAL_VERSES, VerseData, QuestionAnswer } from "@
 import { ChapterMap } from "@/components/gita/ChapterMap";
 import { JournalEntry } from "@/components/gita/JournalEntry";
 import { BookmarkList } from "@/components/gita/BookmarkList";
+import { LanguageSwitch } from "@/components/gita/LanguageSwitch";
+import { useTranslation } from "react-i18next";
 
 interface GitaPageProps {
   userId: string;
