@@ -3,14 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Flame, ArrowRight } from "lucide-react";
 import { useGitaAccess } from "@/hooks/useGitaAccess";
-import { CHAPTER_NAMES, TOTAL_VERSES } from "@/components/gita/constants";
+import { TOTAL_VERSES } from "@/components/gita/constants";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface GitaDashboardWidgetProps {
   userId: string;
 }
 
 export const GitaDashboardWidget = ({ userId }: GitaDashboardWidgetProps) => {
+  const { t } = useTranslation("gita");
+  const chapterNames = t("chapterNames", { returnObjects: true }) as string[];
   const { hasAccess, loading: accessLoading } = useGitaAccess(userId);
   const [progress, setProgress] = useState<{
     current_chapter: number;
@@ -53,7 +56,7 @@ export const GitaDashboardWidget = ({ userId }: GitaDashboardWidgetProps) => {
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Ch. {progress.current_chapter} · V. {progress.current_verse}</span>
-          <span className="text-[10px]">{CHAPTER_NAMES[progress.current_chapter - 1]}</span>
+          <span className="text-[10px]">{chapterNames[progress.current_chapter - 1]}</span>
         </div>
 
         <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
