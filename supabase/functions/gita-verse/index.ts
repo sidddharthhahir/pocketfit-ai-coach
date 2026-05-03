@@ -112,16 +112,20 @@ Deno.serve(async (req) => {
     }
 
     // Regular verse actions
-    const { chapter, verse, question } = body;
+    const { chapter, verse, question, lang } = body;
+    const language = lang === "hi" ? "hi" : "en";
+    const langInstruction = language === "hi"
+      ? `IMPORTANT: All textual fields (meaning, context, deeper_understanding, reflection, insight, chapter_intro, answer, related_verse) MUST be written in natural, respectful Hindi (Devanagari script). Keep the "shlok" in Sanskrit and "transliteration" in Roman script as usual. The "reference" field should read like "अध्याय X, श्लोक Y".`
+      : `All textual fields must be in clear English.`;
 
     let userPrompt = "";
 
     if (action === "explain_deeper") {
-      userPrompt = `Provide a deeper, more detailed explanation for Bhagavad Gita Chapter ${chapter}, Verse ${verse}. Expand the "deeper_understanding" section to 4-5 lines while keeping it grounded and practical. Keep the same JSON format.`;
+      userPrompt = `Provide a deeper, more detailed explanation for Bhagavad Gita Chapter ${chapter}, Verse ${verse}. Expand the "deeper_understanding" section to 4-5 lines while keeping it grounded and practical. Keep the same JSON format. ${langInstruction}`;
     } else if (action === "question") {
-      userPrompt = `The user is reading Bhagavad Gita Chapter ${chapter}, Verse ${verse} and asks: "${question}". Answer using Bhagavad Gita philosophy. Keep it practical, relevant to daily life, grounded. Respond in JSON with fields: "answer" (3-5 lines), "related_verse" (if applicable, otherwise null).`;
+      userPrompt = `The user is reading Bhagavad Gita Chapter ${chapter}, Verse ${verse} and asks: "${question}". Answer using Bhagavad Gita philosophy. Keep it practical, relevant to daily life, grounded. Respond in JSON with fields: "answer" (3-5 lines), "related_verse" (if applicable, otherwise null). ${langInstruction}`;
     } else {
-      userPrompt = `Present Bhagavad Gita Chapter ${chapter}, Verse ${verse}. Follow the exact output format. If this is the first verse of a new chapter, include the chapter_intro.`;
+      userPrompt = `Present Bhagavad Gita Chapter ${chapter}, Verse ${verse}. Follow the exact output format. If this is the first verse of a new chapter, include the chapter_intro. ${langInstruction}`;
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
