@@ -3,26 +3,6 @@ export const CHAPTER_VERSE_COUNTS = [
   55, 20, 35, 27, 20, 24, 28, 78,
 ];
 
-export const CHAPTER_NAMES = [
-  "Arjuna's Despair",
-  "The Way of Knowledge",
-  "The Path of Action",
-  "Knowledge & Renunciation",
-  "Action & Renunciation",
-  "The Practice of Meditation",
-  "Knowledge & Realization",
-  "The Imperishable Absolute",
-  "Royal Knowledge",
-  "Divine Glories",
-  "The Universal Form",
-  "Devotion",
-  "The Field & Knower",
-  "The Three Gunas",
-  "The Supreme Self",
-  "Divine & Demonic Natures",
-  "Three Kinds of Faith",
-  "Liberation Through Renunciation",
-];
 
 export const TOTAL_VERSES = CHAPTER_VERSE_COUNTS.reduce((a, b) => a + b, 0);
 

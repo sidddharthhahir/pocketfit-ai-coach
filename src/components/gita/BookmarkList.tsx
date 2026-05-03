@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bookmark, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface BookmarkListProps {
   userId: string;
@@ -18,6 +19,7 @@ interface BookmarkItem {
 }
 
 export const BookmarkList = ({ userId, onNavigate, onClose }: BookmarkListProps) => {
+  const { t } = useTranslation("gita");
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +43,7 @@ export const BookmarkList = ({ userId, onNavigate, onClose }: BookmarkListProps)
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bookmark className="w-3.5 h-3.5 text-primary" />
-            <p className="text-[10px] text-primary uppercase tracking-widest font-medium">Saved Verses</p>
+            <p className="text-[10px] text-primary uppercase tracking-widest font-medium">{t("savedVerses")}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-3.5 h-3.5" />
@@ -49,9 +51,9 @@ export const BookmarkList = ({ userId, onNavigate, onClose }: BookmarkListProps)
         </div>
 
         {loading ? (
-          <p className="text-xs text-muted-foreground">Loading...</p>
+          <p className="text-xs text-muted-foreground">{t("bookmarksLoading")}</p>
         ) : bookmarks.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic">No saved verses yet. Bookmark verses that resonate with you.</p>
+          <p className="text-xs text-muted-foreground italic">{t("noBookmarks")}</p>
         ) : (
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
             {bookmarks.map((b) => (
@@ -63,7 +65,7 @@ export const BookmarkList = ({ userId, onNavigate, onClose }: BookmarkListProps)
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/5 transition-colors text-sm text-foreground"
               >
-                Chapter {b.chapter}, Verse {b.verse}
+                {t("chapterVerseLabel", { chapter: b.chapter, verse: b.verse })}
               </button>
             ))}
           </div>

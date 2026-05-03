@@ -1,23 +1,20 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { CHAPTER_VERSE_COUNTS, CHAPTER_NAMES } from "./constants";
+import { CHAPTER_VERSE_COUNTS } from "./constants";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ChapterMapProps {
   currentChapter: number;
   currentVerse: number;
-  totalRead: number;
   onNavigate: (chapter: number, verse: number) => void;
 }
 
-export const ChapterMap = ({ currentChapter, currentVerse, totalRead, onNavigate }: ChapterMapProps) => {
-  // Calculate cumulative verse counts to determine which chapters are complete
+export const ChapterMap = ({ currentChapter, currentVerse, onNavigate }: ChapterMapProps) => {
+  const { t } = useTranslation("gita");
+  const chapterNames = t("chapterNames", { returnObjects: true }) as string[];
+
   const getChapterStatus = (chapterIndex: number) => {
-    let versesBeforeChapter = 0;
-    for (let i = 0; i < chapterIndex; i++) {
-      versesBeforeChapter += CHAPTER_VERSE_COUNTS[i];
-    }
     const chapterNum = chapterIndex + 1;
-    
     if (chapterNum < currentChapter) return "complete";
     if (chapterNum === currentChapter) return "current";
     return "locked";
@@ -26,12 +23,12 @@ export const ChapterMap = ({ currentChapter, currentVerse, totalRead, onNavigate
   return (
     <Card className="border-border/30">
       <CardContent className="p-4 space-y-3">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">Chapters</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{t("chapters")}</p>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {CHAPTER_NAMES.map((name, i) => {
+          {chapterNames.map((name, i) => {
             const status = getChapterStatus(i);
             const chapterNum = i + 1;
-            
+
             return (
               <button
                 key={i}
@@ -51,13 +48,11 @@ export const ChapterMap = ({ currentChapter, currentVerse, totalRead, onNavigate
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground">{chapterNum}</span>
-                  {status === "complete" && (
-                    <Check className="w-3 h-3 text-primary" />
-                  )}
+                  {status === "complete" && <Check className="w-3 h-3 text-primary" />}
                 </div>
                 <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1">{name}</p>
                 <p className="text-[8px] text-muted-foreground/60 mt-0.5">
-                  {CHAPTER_VERSE_COUNTS[i]} verses
+                  {t("versesCount", { count: CHAPTER_VERSE_COUNTS[i] })}
                 </p>
               </button>
             );
