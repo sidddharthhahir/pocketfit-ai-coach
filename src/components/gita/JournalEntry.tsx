@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PenLine, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface JournalEntryProps {
   userId: string;
@@ -14,6 +15,7 @@ interface JournalEntryProps {
 
 export const JournalEntry = ({ userId, chapter, verse }: JournalEntryProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation("gita");
   const [open, setOpen] = useState(false);
   const [reflection, setReflection] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,7 +38,7 @@ export const JournalEntry = ({ userId, chapter, verse }: JournalEntryProps) => {
         setReflection("");
       }, 1500);
     } catch (err: any) {
-      toast({ title: "Error", description: "Could not save reflection.", variant: "destructive" });
+      toast({ title: t("errorTitle"), description: t("errorSaveReflection"), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -47,7 +49,7 @@ export const JournalEntry = ({ userId, chapter, verse }: JournalEntryProps) => {
       <Card className="border-primary/20 animate-fade-in">
         <CardContent className="p-4 flex items-center gap-2 justify-center text-sm text-primary">
           <Check className="w-4 h-4" />
-          Reflection saved
+          {t("reflectionSaved")}
         </CardContent>
       </Card>
     );
@@ -62,7 +64,7 @@ export const JournalEntry = ({ userId, chapter, verse }: JournalEntryProps) => {
         className="text-xs text-muted-foreground hover:text-foreground"
       >
         <PenLine className="w-3.5 h-3.5 mr-1.5" />
-        Journal
+        {t("journal")}
       </Button>
     );
   }
@@ -70,19 +72,19 @@ export const JournalEntry = ({ userId, chapter, verse }: JournalEntryProps) => {
   return (
     <Card className="border-border/30 animate-fade-in">
       <CardContent className="p-4 space-y-3">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Your Reflection</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{t("yourReflection")}</p>
         <Textarea
-          placeholder="What does this verse mean to you today?"
+          placeholder={t("journalPlaceholder")}
           value={reflection}
           onChange={(e) => setReflection(e.target.value)}
           className="min-h-[60px] text-sm resize-none bg-transparent border-border/30"
         />
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setReflection(""); }}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving || !reflection.trim()}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("saving") : t("save")}
           </Button>
         </div>
       </CardContent>
