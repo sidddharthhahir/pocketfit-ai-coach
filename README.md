@@ -51,7 +51,14 @@ Your daily fitness, mindfulness, and lifestyle companion — AI-powered workouts
 - **Chapter Overview Map** across all 18 chapters
 - **Reading Streaks** (current & longest)
 - **Dashboard widget** for daily verse + progress
+- **Bilingual UI + AI content** — switch between English and हिन्दी; verse meaning, context, deeper understanding, reflections and Q&A all render in the chosen language
 - Per-user access control — only granted users see it
+
+### 📱 PWA & Branding
+- Installable as a home-screen app (manifest, icons, theme color)
+- BoomStartAI favicon, OG image, and SEO meta tags
+- **Rest Day toggle** so streaks don't break on planned recovery days
+- Reusable empty-state component for trackers
 
 ---
 
