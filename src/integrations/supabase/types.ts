@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_measurements: {
+        Row: {
+          chest_cm: number | null
+          created_at: string
+          hips_cm: number | null
+          id: string
+          left_arm_cm: number | null
+          left_thigh_cm: number | null
+          log_date: string
+          neck_cm: number | null
+          notes: string | null
+          right_arm_cm: number | null
+          right_thigh_cm: number | null
+          user_id: string
+          waist_cm: number | null
+        }
+        Insert: {
+          chest_cm?: number | null
+          created_at?: string
+          hips_cm?: number | null
+          id?: string
+          left_arm_cm?: number | null
+          left_thigh_cm?: number | null
+          log_date?: string
+          neck_cm?: number | null
+          notes?: string | null
+          right_arm_cm?: number | null
+          right_thigh_cm?: number | null
+          user_id: string
+          waist_cm?: number | null
+        }
+        Update: {
+          chest_cm?: number | null
+          created_at?: string
+          hips_cm?: number | null
+          id?: string
+          left_arm_cm?: number | null
+          left_thigh_cm?: number | null
+          log_date?: string
+          neck_cm?: number | null
+          notes?: string | null
+          right_arm_cm?: number | null
+          right_thigh_cm?: number | null
+          user_id?: string
+          waist_cm?: number | null
+        }
+        Relationships: []
+      }
       buddies: {
         Row: {
           buddy_user_id: string
