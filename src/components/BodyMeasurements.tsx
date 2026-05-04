@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Ruler, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
-import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
+import { useBodyMeasurements, type BodyMeasurement } from "@/hooks/useBodyMeasurements";
 import { toast } from "sonner";
 
 interface Props {
