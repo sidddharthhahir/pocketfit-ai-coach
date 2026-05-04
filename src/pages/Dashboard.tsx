@@ -22,6 +22,8 @@ import LifeCountdowns from "@/components/LifeCountdowns";
 import TodayFocus from "@/components/TodayFocus";
 import { GitaDashboardWidget } from "@/components/gita/GitaDashboardWidget";
 import { RestDayToggle } from "@/components/RestDayToggle";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { Compass, BarChart3, Moon, Timer } from "lucide-react";
 
 interface DashboardPageProps {
@@ -96,6 +98,8 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
 
   return (
     <div className="space-y-6">
+      <OnboardingTour />
+      <OnboardingProgress userId={userId} />
       {/* Daily Essentials */}
       <CollapsibleSection
         title="Daily Essentials"
