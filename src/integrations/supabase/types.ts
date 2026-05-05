@@ -489,45 +489,57 @@ export type Database = {
         Row: {
           activity_level: string
           age: number
+          bio: string | null
           created_at: string | null
           dietary_preference: string
+          display_name: string | null
           experience: string
           gender: string
           goal: string
           height: number
           id: string
+          public_enabled: boolean
           updated_at: string | null
           user_id: string
+          username: string | null
           weight: number
           workout_days_per_week: number
         }
         Insert: {
           activity_level?: string
           age: number
+          bio?: string | null
           created_at?: string | null
           dietary_preference: string
+          display_name?: string | null
           experience: string
           gender: string
           goal: string
           height: number
           id?: string
+          public_enabled?: boolean
           updated_at?: string | null
           user_id: string
+          username?: string | null
           weight: number
           workout_days_per_week?: number
         }
         Update: {
           activity_level?: string
           age?: number
+          bio?: string | null
           created_at?: string | null
           dietary_preference?: string
+          display_name?: string | null
           experience?: string
           gender?: string
           goal?: string
           height?: number
           id?: string
+          public_enabled?: boolean
           updated_at?: string | null
           user_id?: string
+          username?: string | null
           weight?: number
           workout_days_per_week?: number
         }

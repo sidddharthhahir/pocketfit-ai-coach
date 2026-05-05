@@ -24,6 +24,7 @@ import { GitaDashboardWidget } from "@/components/gita/GitaDashboardWidget";
 import { RestDayToggle } from "@/components/RestDayToggle";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
+import { ShareCard } from "@/components/ShareCard";
 import { Compass, BarChart3, Moon, Timer } from "lucide-react";
 
 interface DashboardPageProps {
@@ -161,6 +162,7 @@ export const DashboardPage = ({ userData, userId }: DashboardPageProps) => {
             totalDaysActive={stats.totalDaysActive}
           />
         </div>
+        <ShareCard streak={stats.currentStreak} workouts={stats.weeklyWorkoutCount} />
         <WaterSleepCharts
           weeklyWater={waterSleepStats.weeklyWater}
           weeklySleep={waterSleepStats.weeklySleep}
