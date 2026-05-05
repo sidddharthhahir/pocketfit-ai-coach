@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, subDays } from "date-fns";
+import { BuddyLeaderboard } from "@/components/BuddyLeaderboard";
 
 interface AccountabilityPageProps {
   userId: string;
@@ -388,6 +389,20 @@ export const AccountabilityPage = ({ userId }: AccountabilityPageProps) => {
           </div>
         </Card>
       </div>
+
+      {buddies.length > 0 && (
+        <BuddyLeaderboard
+          entries={[
+            { id: "me", name: "You", isMe: true, workouts: myStats.workouts_count, streak: myStats.current_streak },
+            ...buddies.map((b) => ({
+              id: b.id,
+              name: b.buddyEmail || `Buddy ${b.id.slice(0, 4)}`,
+              workouts: b.stats?.workouts_count || 0,
+              streak: b.stats?.current_streak || 0,
+            })),
+          ]}
+        />
+      )}
 
       {/* Buddies List */}
       {buddies.length > 0 && (
