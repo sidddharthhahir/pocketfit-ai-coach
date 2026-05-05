@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import PublicProfile from "./pages/PublicProfile";
 import { AppRoutes } from "./routes/AppRoutes";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -23,6 +24,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/u/:username" element={<PublicProfile />} />
               {/* All app routes handled by AppRoutes with MainLayout */}
               <Route path="/*" element={<AppRoutes />} />
             </Routes>
