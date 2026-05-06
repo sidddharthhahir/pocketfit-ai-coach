@@ -17,6 +17,7 @@ import AccountabilityPage from "@/pages/Accountability";
 import CommitmentsPage from "@/pages/Commitments";
 import ProfilePage from "@/pages/Profile";
 import GitaPage from "@/pages/Gita";
+import ChallengesPage from "@/pages/Challenges";
 
 export const AppRoutes = () => {
   const navigate = useNavigate();
