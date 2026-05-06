@@ -113,6 +113,76 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_checkins: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          day_date: string
+          id: string
+          note: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          day_date?: string
+          id?: string
+          note?: string | null
+          user_id: string
+          value?: number
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          day_date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_checkins_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "group_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_members: {
+        Row: {
+          challenge_id: string
+          display_name: string | null
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_members_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "group_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commitments: {
         Row: {
           created_at: string
@@ -419,6 +489,45 @@ export type Database = {
           total_verses_read?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      group_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          description: string | null
+          duration_days: number
+          id: string
+          invite_code: string
+          name: string
+          owner_id: string
+          start_date: string
+          target_per_day: number
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          invite_code?: string
+          name: string
+          owner_id: string
+          start_date?: string
+          target_per_day?: number
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          invite_code?: string
+          name?: string
+          owner_id?: string
+          start_date?: string
+          target_per_day?: number
         }
         Relationships: []
       }
@@ -800,6 +909,10 @@ export type Database = {
         }[]
       }
       has_gita_access: { Args: { _user_id: string }; Returns: boolean }
+      is_challenge_member: {
+        Args: { _challenge_id: string; _user_id: string }
+        Returns: boolean
+      }
       lookup_buddy_invite: {
         Args: { p_invite_code: string }
         Returns: {
