@@ -17,6 +17,7 @@ import AccountabilityPage from "@/pages/Accountability";
 import CommitmentsPage from "@/pages/Commitments";
 import ProfilePage from "@/pages/Profile";
 import GitaPage from "@/pages/Gita";
+import ChallengesPage from "@/pages/Challenges";
 
 export const AppRoutes = () => {
   const navigate = useNavigate();
@@ -135,6 +136,10 @@ export const AppRoutes = () => {
         <Route
           path="/gita"
           element={<GitaPage userId={user!.id} />}
+        />
+        <Route
+          path="/challenges"
+          element={<ChallengesPage userId={user!.id} />}
         />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

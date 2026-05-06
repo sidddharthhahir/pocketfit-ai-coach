@@ -1,7 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import {
   Home, Dumbbell, Utensils, TrendingUp, User,
-  MoreHorizontal, Sun, Moon, Camera, Users, Target, BookOpen,
+  MoreHorizontal, Sun, Moon, Camera, Users, Target, BookOpen, Trophy,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -41,6 +41,7 @@ const baseMoreItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
+  { to: "/challenges", label: "Challenges", icon: Trophy },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
@@ -50,7 +51,7 @@ export const MobileNav = () => {
   const { hasAccess } = useGitaAccess(user?.id);
 
   const moreNavItems = hasAccess
-    ? [...baseMoreItems.slice(0, 3), { to: "/gita", label: "Gita", icon: BookOpen }, baseMoreItems[3]]
+    ? [...baseMoreItems.slice(0, 4), { to: "/gita", label: "Gita", icon: BookOpen }, baseMoreItems[4]]
     : baseMoreItems;
 
   return (

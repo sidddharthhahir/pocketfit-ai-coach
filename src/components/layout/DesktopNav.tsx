@@ -2,7 +2,7 @@ import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import {
   Home, Dumbbell, Utensils, TrendingUp, User,
-  Camera, Users, Target, LogOut, BookOpen,
+  Camera, Users, Target, LogOut, BookOpen, Trophy,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useGitaAccess } from "@/hooks/useGitaAccess";
@@ -20,6 +20,7 @@ const baseNavItems = [
   { to: "/photos", label: "Photos", icon: Camera },
   { to: "/accountability", label: "Buddy", icon: Users },
   { to: "/commitments", label: "Goals", icon: Target },
+  { to: "/challenges", label: "Challenges", icon: Trophy },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
@@ -28,7 +29,7 @@ export const DesktopNav = ({ onSignOut }: DesktopNavProps) => {
   const { hasAccess } = useGitaAccess(user?.id);
 
   const navItems = hasAccess
-    ? [...baseNavItems.slice(0, 7), { to: "/gita", label: "Gita", icon: BookOpen }, baseNavItems[7]]
+    ? [...baseNavItems.slice(0, 8), { to: "/gita", label: "Gita", icon: BookOpen }, baseNavItems[8]]
     : baseNavItems;
 
   return (
