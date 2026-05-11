@@ -4,6 +4,8 @@ Your daily fitness, mindfulness, and lifestyle companion — AI-powered workouts
 
 ---
 
+LIVE/PRODUCTION: https://boomstart.lovable.app/dashboard
+
 ## ✨ Features
 
 ### 🧭 Daily Focus
